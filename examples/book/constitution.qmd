@@ -1,0 +1,9 @@
+# Constitution
+
+The Constitution is cited again in this chapter as a fresh chapter-local footnote.^[See [@brasil1988]{.bibentry}]
+
+A second occurrence in this same chapter reuses the local constitutional note.^[See [@brasil1988]{.bibentry}]
+
+José Afonso da Silva may likewise reappear here as a new local footnote for this chapter.^[See [@silva2026]{.bibentry}]
+
+The HTML book therefore mirrors the intended page semantics naturally: **new rendered chapter page, new footnote scope; repeated call within that page, reused footnote**.
