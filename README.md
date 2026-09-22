@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/reusable-footnotes-logo.png" alt="reusable-footnotes logo" width="640">
+  <img src="assets/logo.png" alt="reusable-footnotes logo" width="640">
 </p>
 
 # reusable-footnotes
