@@ -12,6 +12,8 @@ bibliography: references.bib
 
 The same pattern is also familiar in **History, Philosophy, Theology, Classics, literary studies, and other Humanities disciplines**, where full references in footnotes keep documentary support close to the argument.
 
+In page-based outputs such as **PDF** and **DOCX**, this pattern has an especially practical advantage: a native footnote is laid out on the same page as the marker that calls it. The reader can therefore inspect the authority supporting a proposition without leaving the page or jumping to a bibliography at the end of the document. This proximity between argument and source is one of the reasons footnote-based citation remains so useful in legal and humanities writing.
+
 The important distinction is between the **bibliographic source** and the **footnote occurrence**. BibTeX should define the source once; Quarto should decide how that source is rendered where it is cited.
 
 # Two native Quarto citation forms
@@ -59,6 +61,8 @@ A constitutional proposition may be supported in a page footnote.^[See [@silva20
 
 This is the core legal use case: the prose contains only a superscript marker, while the footnote contains the full bibliographic entry.
 
+For **PDF** and **DOCX**, this means the full authority can appear at the bottom of the very page on which the proposition is made. A page can therefore carry the bibliographic support needed for the authorities cited on that page, keeping the documentary evidence physically close to the legal argument.
+
 The Constitution itself can be rendered in full the same way.^[See [@brasil1988]{.bibentry}]
 
 The mechanism is not limited to Law. A historical argument can use the same pattern.^[See [@bloch1953]{.bibentry}]
@@ -77,6 +81,8 @@ For example, this reference appears once here.^[See [@silva2026]{.bibentry}]
 And the same reference appears again later with exactly the same footnote content.^[See [@silva2026]{.bibentry}]
 
 Within the current reusable-footnote scope, both occurrences can point to the same canonical note instead of duplicating the same long reference text.
+
+The page-local reading benefit described above comes from **native footnotes** themselves. Reuse is a separate policy: when an identical note is deliberately deduplicated, later markers may point back to a canonical note according to the configured output scope.
 
 If the footnote content changes, it is treated as a different note. This makes locators explicit and predictable:
 
@@ -150,13 +156,15 @@ The intention is to propose these changes back to `fredguth/bibentry` rather tha
 
 # Output formats
 
-The integration is designed to remain writer-neutral:
+The integration is designed to remain writer-neutral, but its practical effect is particularly useful in page-based formats. **PDF** and **DOCX** can place a native bibliographic footnote on the same page as the text that cites it, so the reader does not need to leave the page to identify the source.
 
 | Format | `bibentry` inside a native footnote | Reusable identical note |
 |---|---|---|
 | HTML | native footnote with full CSL entry | canonical note within the rendered page |
-| PDF | native LaTeX footnote with full CSL entry | repeated clickable marker |
-| DOCX | native Word footnote with full CSL entry | canonical note within the configured DOCX scope |
+| PDF | native LaTeX footnote with full CSL entry, laid out on the same page as its marker | repeated clickable marker to the canonical note |
+| DOCX | native Word footnote with full CSL entry, laid out on the same page as its marker | canonical note within the configured DOCX scope |
+
+This makes the combination especially attractive for legal and humanities documents: **BibTeX remains the single source of bibliographic truth, while PDF and DOCX can keep the full authority close to the exact page where it is cited.**
 
 No Python or output-specific post-processing is required.
 
