@@ -112,24 +112,29 @@ A mesma frase pode ser definida como nota nomeada e reutilizada abaixo.[^mista]
 
 [^mista]: Esta nota demonstra a correspondência entre formas de autoria.
 
-# DOCX sem pós-processamento
+# Links nas recorrências
+
+No PDF, a primeira nota recebe internamente um `\label`. Cada número repetido é
+renderizado como um `\hyperref` para esse mesmo destino. Assim, **todas as
+ocorrências do número são clicáveis**, não apenas a primeira.
 
 No DOCX, a primeira ocorrência permanece uma nota nativa do Word. Para uma nota
-que será reutilizada, a extensão coloca um bookmark invisível em torno dessa
-primeira marca. As ocorrências seguintes são campos `NOTEREF` do Word apontando
-para o bookmark original.
+que será reutilizada, a extensão cria um bookmark invisível dentro da própria
+nota em `footnotes.xml`. As ocorrências seguintes são hyperlinks internos com o
+estilo `FootnoteReference` e o número canônico explícito.
 
-Assim, o arquivo mantém **uma única nota real** em `footnotes.xml`, sem precisar
-descompactar, editar ou remontar o `.docx` depois da renderização. O campo
-`NOTEREF` também pode acompanhar uma eventual renumeração feita pelo Word.
+Isso evita campos `NOTEREF` e, portanto, evita resultados cacheados ou
+recalculados incorretamente pelo Word. Cada conteúdo diferente mantém seu
+próprio número, enquanto ocorrências realmente iguais reutilizam o número da
+nota original.
 
 # Comportamento por formato
 
 | Formato | Recorrência | Rodapé |
 |---|---|---|
 | HTML | mesmo número e link para a nota original | uma nota; retorno discreto por ocorrência |
-| PDF | mesmo número sem criar uma segunda nota | uma nota real |
-| DOCX | campo nativo `NOTEREF` para a primeira referência | uma única nota real; sem pós-processamento |
+| PDF | mesmo número, sempre clicável | uma única nota real |
+| DOCX | mesmo número em hyperlink interno para a nota canônica | uma única nota real; sem `NOTEREF` e sem pós-processamento |
 
 No HTML de um website/book, a unidade natural é a página renderizada. Assim,
 a mesma nota usada em outro `.qmd` recebe a numeração apropriada daquela nova
