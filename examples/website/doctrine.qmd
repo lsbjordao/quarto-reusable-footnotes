@@ -1,0 +1,17 @@
+---
+title: "Doctrine"
+---
+
+# The same source on another HTML page
+
+This is a different rendered website page, so the footnote scope starts again here.
+
+José Afonso da Silva is cited again and receives a new local footnote for this page.^[See [@silva2026]{.bibentry}]
+
+A second occurrence on the same page reuses that new page-local footnote instead of duplicating the full bibliographic entry.^[See [@silva2026]{.bibentry}]
+
+A historical source can use exactly the same mechanism.^[See [@bloch1953]{.bibentry}]
+
+The historical source is repeated locally and therefore reuses its existing footnote on this page.^[See [@bloch1953]{.bibentry}]
+
+Continue to the [Constitution](constitution.qmd) page for another independent page scope.
