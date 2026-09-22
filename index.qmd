@@ -1,146 +1,310 @@
 ---
 title: "reusable-footnotes"
-subtitle: "Notas de rodapé reutilizáveis para Quarto"
+subtitle: "Reusable footnote citations for Quarto"
 author: "Lucas Sá Barreto Jordão"
-date: "2026-09-21"
+date: "2026-09-22"
 ---
 
-# Ideia
+# Why reusable footnotes?
 
-`reusable-footnotes` mantém a sintaxe normal de notas de rodapé do
-Quarto/Pandoc. Quando **duas ou mais notas têm exatamente o mesmo conteúdo**,
-as ocorrências posteriores remetem ao mesmo número em vez de criarem uma nova
-nota.
+`reusable-footnotes` is motivated by a writing pattern that is especially common
+in **legal scholarship and legal practice**: bibliographic references are placed
+in footnotes close to the proposition they support, rather than being visible
+only in a reference list at the end of the document.
 
-No HTML, os retornos aparecem da forma mais discreta possível: uma pequena
-seta de retorno para cada ocorrência. Em um book ou website, cada arquivo/página HTML é renderizado separadamente;
-por isso a numeração e a reutilização recomeçam naturalmente em outra página.
+A legal brief, opinion, memorandum, article, or book may therefore contain a
+sentence such as:
 
-A implementação é inteiramente em **Lua/Quarto**, inclusive para DOCX. Não há
-pós-processamento em Python.
+> The constitutional interpretation of a rule depends on the institutional
+> context in which it operates.¹
 
-# 1. Nota inline `^[...]`
+and the footnote on that page contains the bibliographic source itself:
 
-A primeira afirmação usa uma nota inline.^[Flora e Funga do Brasil. Jardim
-Botânico do Rio de Janeiro, 2026.]
+> ¹ BARROSO, Luís Roberto. *Curso de direito constitucional contemporâneo*.
+> São Paulo: Saraiva, 2024, p. 185.
 
-Alguns parágrafos depois, o mesmo conteúdo volta a ser citado.^[Flora e Funga
-do Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+The same work may legitimately appear again in a footnote on another page. This
+is not necessarily accidental duplication: page footnotes make the source
+available where the reader needs it, without requiring constant movement to a
+final bibliography.
 
-E uma terceira ocorrência continua remetendo à mesma nota.^[Flora e Funga do
-Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+This citation culture is particularly visible in **Law**, but related practices
+are also common in **History, Philosophy, Theology, Classics, literary studies,
+and other Humanities disciplines**.
 
-```markdown
-A primeira afirmação.^[Flora e Funga do Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+# The central idea
 
-Outra afirmação.^[Flora e Funga do Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+The important distinction is between a **source** and an **occurrence of that
+source in the text**.
+
+A source should be defined only once:
+
+```text
+barroso2024
+    │
+    ├── citation occurrence on page 2  → footnote
+    ├── citation occurrence on page 7  → footnote
+    └── citation occurrence on page 14 → footnote
 ```
 
-# 2. Nota nomeada `[^id]`
+The bibliographic identity is reusable, while each citation occurrence can be
+rendered as a footnote at the point where it is needed.
 
-A sintaxe nomeada continua funcionando normalmente.[^mapbiomas]
+This is a better conceptual model for legal citation than treating the full
+bibliographic text itself as something the author must copy and paste repeatedly.
 
-A mesma nota pode ser chamada novamente no texto.[^mapbiomas]
+# Current textual-footnote support
 
-E novamente, sem repetir o conteúdo no rodapé.[^mapbiomas]
+Version 0.2.2 still supports ordinary Pandoc/Quarto footnotes. Repeated notes can
+be recognized from their AST content.
 
-[^mapbiomas]: MAPBIOMAS. Coleção de mapas anuais de cobertura e uso da terra do Brasil. 2026.
+## Inline notes
+
+The first statement uses an inline note.^[A reusable explanatory note can be
+written with the normal Pandoc inline-footnote syntax.]
+
+The same note can occur again later.^[A reusable explanatory note can be written
+with the normal Pandoc inline-footnote syntax.]
 
 ```markdown
-Texto A.[^mapbiomas]
+The first statement.^[A reusable explanatory note.]
 
-Texto B.[^mapbiomas]
-
-[^mapbiomas]: MAPBIOMAS. Coleção de mapas anuais de cobertura e uso da terra do Brasil. 2026.
+The later statement.^[A reusable explanatory note.]
 ```
 
-# 3. Notas diferentes intercaladas
+## Named notes
 
-Uma fonte pode aparecer primeiro.^[IUCN. *Guidelines for Using the IUCN Red
-List Categories and Criteria*. Version 16, 2024.]
+Named Markdown footnotes also remain valid.[^named]
 
-Uma segunda nota, com conteúdo diferente, recebe outro número.^[Um comentário
-metodológico independente, que deve permanecer como nota própria.]
+The same definition can be referenced again.[^named]
 
-A fonte IUCN reaparece e recupera o número da primeira ocorrência.^[IUCN.
-*Guidelines for Using the IUCN Red List Categories and Criteria*. Version 16,
-2024.]
+[^named]: A named explanatory footnote defined once in the source document.
 
-A nota metodológica também pode reaparecer com o número que já recebeu.^[Um
-comentário metodológico independente, que deve permanecer como nota própria.]
+```markdown
+First occurrence.[^named]
 
-# 4. Conteúdo rico
+Later occurrence.[^named]
 
-Notas com **ênfase**, `código` e links também podem ser reutilizadas.^[Exemplo
-com **negrito**, `código` e um link para [Quarto](https://quarto.org/).]
+[^named]: A named explanatory footnote defined once in the source document.
+```
 
-O conteúdo rico idêntico continua sendo reconhecido.^[Exemplo com **negrito**,
-`código` e um link para [Quarto](https://quarto.org/).]
+# Why BibTeX should become the source of truth
 
-# 5. Nota com vários parágrafos
+For **bibliographic** footnotes, comparing repeated prose is not the most
+idiomatic solution. Quarto already has a native identity system for references:
+**citation keys** backed by BibTeX, BibLaTeX, CSL JSON, or other bibliography
+formats.
 
-Uma nota nomeada pode conter mais de um parágrafo.[^longa]
+A bibliography entry such as:
 
-Depois ela pode ser chamada novamente.[^longa]
+```bibtex
+@book{barroso2024,
+  author    = {Barroso, Luís Roberto},
+  title     = {Curso de direito constitucional contemporâneo},
+  publisher = {Saraiva},
+  address   = {São Paulo},
+  year      = {2024}
+}
+```
 
-[^longa]: Primeiro parágrafo de uma nota mais longa.
+already gives the source a stable identifier: `barroso2024`.
 
-    Segundo parágrafo da mesma nota. A estrutura completa participa da
-    comparação, portanto a reutilização não depende apenas do primeiro
-    parágrafo.
+The extension should therefore reuse **that identifier**, rather than asking the
+author to repeat the formatted reference text manually.
 
-# 6. Correspondência é exata
+# Proposed native citation API
 
-Estas duas notas são diferentes porque o conteúdo não é exatamente o mesmo.^[A
-fonte foi consultada em 2025.]
+> **Design target:** the BibTeX-backed examples in this section describe the
+> intended next API. They are not yet the behavior implemented by v0.2.2.
 
-Esta recebe outro número.^[A fonte foi consultada em 2026.]
+There are two plausible Quarto-native forms.
 
-Isso é intencional: a extensão não tenta inferir que textos parecidos se
-referem à mesma fonte.
+## Option A — citation syntax creates the footnote
 
-# 7. Mistura de formas
+This is the most idiomatic form for a document whose citation system is entirely
+footnote-based:
 
-O mecanismo não depende de a nota original ter sido escrita inline ou com um
-identificador. Pandoc transforma ambas em nós `Note`; a extensão compara o
-conteúdo resultante.
+```markdown
+The constitutional question has been discussed extensively.[@barroso2024, p. 185]
+```
 
-Uma nota inline aparece aqui.^[Esta nota demonstra a correspondência entre
-formas de autoria.]
+The author writes a normal Quarto citation. A note-style citation renderer turns
+that citation into a real footnote.
 
-A mesma frase pode ser definida como nota nomeada e reutilizada abaixo.[^mista]
+The desired result is conceptually:
 
-[^mista]: Esta nota demonstra a correspondência entre formas de autoria.
+```text
+The constitutional question has been discussed extensively.¹
 
-# Links nas recorrências
+────────────────────────────────────────
+¹ BARROSO, Luís Roberto. Curso de direito constitucional contemporâneo.
+  São Paulo: Saraiva, 2024, p. 185.
+```
 
-No PDF, a primeira nota recebe internamente um `\label`. Cada número repetido é
-renderizado como um `\hyperref` para esse mesmo destino. Assim, **todas as
-ocorrências do número são clicáveis**, não apenas a primeira.
+A later citation reuses the same BibTeX identity:
 
-No DOCX, a numeração nativa pode reiniciar em cada seção H1. Por isso, a
-extensão usa `docx-scope: section` por padrão: a primeira ocorrência em cada
-seção permanece uma nota nativa do Word, e as recorrências daquela mesma seção
-usam o número local da nota canônica.
+```markdown
+The same author returns to the institutional problem.[@barroso2024, p. 241]
+```
 
-Por exemplo, na seção "Notas diferentes intercaladas", a primeira fonte é a
-nota `1`, a segunda é a nota `2`, e as duas recorrências voltam respectivamente
-a `1` e `2`. Ao começar a seção seguinte, a primeira nota pode voltar a ser
-`1`, exatamente como na numeração nativa do Word.
+but creates another citation occurrence and therefore another footnote at that
+point in the document.
 
-Os hyperlinks reutilizados apontam para bookmarks invisíveis dentro das notas
-canônicas em `footnotes.xml`. Não são usados campos `NOTEREF` nem
-pós-processamento.
+## Option B — an explicit footnote containing a citation
 
-# Comportamento por formato
+For documents that mix ordinary inline citations and legal-style footnote
+citations, standard Pandoc syntax already provides another expressive form:
 
-| Formato | Recorrência | Rodapé |
-|---|---|---|
-| HTML | mesmo número e link para a nota original | uma nota; retorno discreto por ocorrência |
-| PDF | mesmo número, sempre clicável | uma única nota real |
-| DOCX | mesmo número local da seção, em hyperlink interno | uma única nota real por conteúdo em cada seção H1 |
+```markdown
+The constitutional question has been discussed extensively.^[@barroso2024, p. 185]
+```
 
-No HTML de um website/book, a unidade natural é a página renderizada. No PDF,
-o escopo é o documento. No DOCX, o padrão é a seção H1 para acompanhar a
-reinicialização nativa da numeração; projetos com numeração contínua podem usar
-`docx-scope: document`.
+This is attractive because both components remain native:
+
+- `^[...]` is a Pandoc footnote;
+- `@barroso2024` is a Pandoc/Quarto citation;
+- the `.bib` file remains the only bibliographic database.
+
+The extension would only need to change the **rendering mode** of the citation
+inside that footnote.
+
+# The important formatting requirement
+
+The goal is **not** to place the normal inline citation form inside a footnote.
+For example, this is not the desired result:
+
+```text
+¹ (Barroso 2024, 185)
+```
+
+Instead, the citation should be rendered in a **long bibliographic form**, close
+to the entry that would normally appear in Quarto's final reference list:
+
+```text
+¹ BARROSO, Luís Roberto. Curso de direito constitucional contemporâneo.
+  São Paulo: Saraiva, 2024, p. 185.
+```
+
+This distinction matters because CSL has separate concepts for **citation
+layout** and **bibliography layout**. A normal inline citation uses the citation
+layout; a final reference list uses the bibliography layout.
+
+For `reusable-footnotes`, we want a citation occurrence to behave like a
+footnote while retaining the richer bibliographic representation of its source.
+
+# A promising implementation path
+
+Pandoc exposes the pieces needed for a native implementation:
+
+1. citations remain ordinary `Cite` nodes with BibTeX keys;
+2. bibliography entries can be loaded through Pandoc's own bibliography system;
+3. a Lua filter can use Pandoc's cite processor instead of parsing BibTeX itself;
+4. the rendered long-form entry can then be placed inside a real `Note` node;
+5. HTML, PDF, and DOCX writers can render that `Note` natively.
+
+This means the extension does **not** need a second bibliography parser and does
+not need Python or output-specific post-processing.
+
+# CSL strategy
+
+There are two implementation strategies worth comparing.
+
+## 1. A bundled full-note CSL style
+
+A CSL style can be configured as a note style whose citation layout uses the
+same rich macros as its bibliography layout.
+
+Then the author could simply write:
+
+```markdown
+[@barroso2024, p. 185]
+```
+
+and Pandoc/citeproc would generate the footnote.
+
+Advantages:
+
+- maximally native Quarto/Pandoc workflow;
+- locators such as pages and sections remain handled by CSL;
+- repeated citations, abbreviated subsequent citations, and `ibid.` behavior can
+  all be controlled declaratively by CSL;
+- works naturally across HTML, PDF, and DOCX.
+
+The limitation is that the long footnote form is defined by that CSL style; it
+is not automatically the bibliography layout of every arbitrary CSL file.
+
+## 2. Render an individual bibliography entry through citeproc
+
+Pandoc's Lua API provides `pandoc.utils.references()` and
+`pandoc.utils.citeproc()`. This makes a more general strategy possible: the
+extension can resolve a citation key, ask Pandoc itself to render that reference
+as a one-entry bibliography, extract the resulting `csl-entry`, and place that
+content in the footnote.
+
+Advantages:
+
+- the long form can closely follow the actual bibliography representation;
+- the user's BibTeX database remains authoritative;
+- the extension can potentially work with the user's existing CSL instead of
+  requiring a dedicated legal citation style.
+
+The harder part is handling citation-specific information such as `p. 185`,
+prefixes, suffixes, and sophisticated CSL rules for subsequent citations.
+
+# Recommended first BibTeX milestone
+
+A good first implementation would support:
+
+```markdown
+A proposition.^[@barroso2024]
+
+A proposition with a locator.^[@barroso2024, p. 185]
+
+Several authorities.^[@barroso2024; @silva2023]
+```
+
+with these rules:
+
+- bibliography data comes from Quarto's normal `bibliography:` metadata;
+- citation keys are the reusable identities;
+- each occurrence creates a real footnote;
+- the default footnote representation is long-form;
+- page/section locators are preserved;
+- an optional final bibliography can still be generated;
+- no bibliography text is duplicated manually in the `.qmd` source;
+- the implementation remains Lua + Pandoc/Quarto only.
+
+Later modes could add:
+
+- `full`: full reference at every occurrence;
+- `short`: full first citation, shortened subsequent citations;
+- `ibid`: traditional `ibid.` behavior when appropriate;
+- a legal-specific bundled CSL profile;
+- user-provided footnote CSL styles.
+
+# Why this is still "reusable-footnotes"
+
+The reusable object is not necessarily the rendered footnote number. For legal
+bibliographic writing, the reusable object is the **reference definition**.
+
+BibTeX defines the source once; each `@key` occurrence instantiates that source
+as a footnote where the argument needs documentary support.
+
+That model is both closer to legal writing practice and more idiomatic in
+Quarto than copying formatted bibliographic prose into repeated `^[...]`
+expressions.
+
+# Current output behavior
+
+For the existing textual-footnote implementation:
+
+| Format | Repeated textual note |
+|---|---|
+| HTML | Reuses the canonical note within the rendered page |
+| PDF | Reuses the canonical note with clickable repeated markers |
+| DOCX | Reuses the canonical note within the configured DOCX scope |
+
+The proposed BibTeX mode is intentionally different: **each bibliographic
+citation occurrence should normally become a real footnote**, while the
+bibliographic source definition itself remains reusable through its citation
+key.
