@@ -37,6 +37,22 @@ local function meta_string(value, default)
   return s
 end
 
+local function meta_string_list(value)
+  local result = pandoc.List()
+  if value == nil then return result end
+  local kind = utils.type(value)
+  if kind == "List" or kind == "MetaList" then
+    for _, item in ipairs(value) do
+      local s = utils.stringify(item)
+      if s ~= "" then result:insert(s) end
+    end
+  else
+    local s = utils.stringify(value)
+    if s ~= "" then result:insert(s) end
+  end
+  return result
+end
+
 local function config_from(meta)
   local cfg = {
     enabled = true,
@@ -44,6 +60,7 @@ local function config_from(meta)
     scope = "page",
     numbering = "continuous",
     docx_scope = "pagebreak",
+    html_order = pandoc.List(),
   }
 
   local raw = meta["reusable-footnotes"]
@@ -55,6 +72,7 @@ local function config_from(meta)
     cfg.scope = meta_string(raw.scope, "page")
     cfg.numbering = meta_string(raw.numbering, "continuous")
     cfg.docx_scope = meta_string(raw["docx-scope"], "pagebreak")
+    cfg.html_order = meta_string_list(raw["html-order"])
   else
     cfg.enabled = meta_bool(raw, true)
   end
@@ -99,6 +117,90 @@ local function include_html_assets()
   if quarto and quarto.doc and quarto.doc.include_file then
     quarto.doc.include_file('in-header', 'reusable-footnotes.html')
   end
+end
+
+local function normalize_path(path)
+  path = tostring(path or ''):gsub('\\', '/')
+  path = path:gsub('/+', '/')
+  path = path:gsub('^%./', '')
+  return path
+end
+
+local function join_path(base, relative)
+  relative = normalize_path(relative)
+  if relative:match('^/') or relative:match('^%a:/') then return relative end
+  return normalize_path(base) .. '/' .. relative
+end
+
+local function count_unique_notes_in_source(path)
+  local handle = io.open(path, 'r')
+  if not handle then return 0 end
+  local source = handle:read('*a')
+  handle:close()
+
+  local ok, parsed = pcall(pandoc.read, source, 'markdown')
+  if not ok or parsed == nil then return 0 end
+
+  local seen = {}
+  local count = 0
+  parsed:walk({
+    Note = function(note)
+      local key = note_key(note)
+      if not seen[key] then
+        seen[key] = true
+        count = count + 1
+      end
+      return nil
+    end
+  })
+  return count
+end
+
+local function html_global_offset(cfg)
+  if cfg.numbering ~= 'continuous' or #cfg.html_order == 0 then return 0 end
+  if not quarto or not quarto.project or not quarto.doc then return 0 end
+  if not quarto.project.directory or not quarto.doc.input_file then return 0 end
+
+  local project_dir = normalize_path(quarto.project.directory)
+  local current = normalize_path(quarto.doc.input_file)
+  local prefix = project_dir .. '/'
+  local relative_current = current
+  if current:sub(1, #prefix) == prefix then
+    relative_current = current:sub(#prefix + 1)
+  end
+  relative_current = normalize_path(relative_current)
+
+  local offset = 0
+  local found = false
+  for _, source_path in ipairs(cfg.html_order) do
+    local relative = normalize_path(source_path)
+    if relative == relative_current then
+      found = true
+      break
+    end
+    offset = offset + count_unique_notes_in_source(join_path(project_dir, relative))
+  end
+
+  if not found then return 0 end
+  return offset
+end
+
+local function append_html_global_numbering_script(doc, offset)
+  if offset <= 0 then return doc end
+  local script = string.format([[
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const offset = %d;
+  document.querySelectorAll('a[role="doc-noteref"] > sup').forEach(function (sup) {
+    const local = Number.parseInt(sup.textContent, 10);
+    if (!Number.isNaN(local)) sup.textContent = String(local + offset);
+  });
+  const list = document.querySelector('section.footnotes > ol');
+  if (list) list.setAttribute('start', String(offset + 1));
+});
+</script>]], offset)
+  doc.blocks:insert(pandoc.RawBlock('html', script))
+  return doc
 end
 
 local function add_header_latex(meta, text)
@@ -294,7 +396,7 @@ local function process_html(doc, cfg)
     ))
   end})
   include_html_assets()
-  return transformed
+  return append_html_global_numbering_script(transformed, html_global_offset(cfg))
 end
 
 local function add_docx_note_anchor(note, bookmark_id, bookmark_name)
