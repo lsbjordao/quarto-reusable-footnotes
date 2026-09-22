@@ -1,0 +1,13 @@
+---
+title: "Constitution"
+---
+
+# Chapter 3 — global sequence, local reuse
+
+The Constitution appears again in this chapter as a new page-local footnote numbered **5**.^[See [@brasil1988]{.bibentry}]
+
+A repeated occurrence reuses footnote **5**.^[See [@brasil1988]{.bibentry}]
+
+José Afonso da Silva then receives footnote **6** in this chapter.^[See [@silva2026]{.bibentry}]
+
+This demonstrates the book-wide numbering variant: **each chapter page owns its footnotes, while the visible numbering continues across the book**.
