@@ -19,22 +19,22 @@ The important distinction is between the **bibliographic source** and the **foot
 A normal Pandoc/Quarto citation remains completely unchanged:
 
 ```qmd
-A normal citation stays normal: [@barroso2024].
+A normal citation stays normal: [@silva2026].
 ```
 
-For example: a normal citation stays normal [@barroso2024].
+For example: a normal citation stays normal [@silva2026].
 
 The vendored `bibentry` extension adds a second, explicit representation:
 
 ```qmd
-[@barroso2024]{.bibentry}
+[@silva2026]{.bibentry}
 ```
 
-That form prints the **full bibliography entry using the bibliography layout of the active CSL style**. It does not redefine what `@barroso2024` means.
+That form prints the **full bibliography entry using the bibliography layout of the active CSL style**. It does not redefine what `@silva2026` means.
 
 Here is the full entry inline:
 
-[@barroso2024]{.bibentry}
+[@silva2026]{.bibentry}
 
 If the document defines, for example,
 
@@ -50,16 +50,16 @@ then both the ordinary citation and the `.bibentry` representation use the same 
 The useful composition is entirely native Pandoc syntax:
 
 ```qmd
-A legal proposition.^[See [@barroso2024]{.bibentry}]
+A legal proposition.^[See [@silva2026]{.bibentry}]
 ```
 
 Rendered here:
 
-A constitutional proposition may be supported in a page footnote.^[See [@barroso2024]{.bibentry}]
+A constitutional proposition may be supported in a page footnote.^[See [@silva2026]{.bibentry}]
 
 This is the core legal use case: the prose contains only a superscript marker, while the footnote contains the full bibliographic entry.
 
-A second authority works the same way.^[See [@mendes2023]{.bibentry}]
+The Constitution itself can be rendered in full the same way.^[See [@brasil1988]{.bibentry}]
 
 The mechanism is not limited to Law. A historical argument can use the same pattern.^[See [@bloch1953]{.bibentry}]
 
@@ -72,18 +72,18 @@ The mechanism is not limited to Law. A historical argument can use the same patt
 
 Because `bibentry` runs first, two identical bibliographic footnotes become identical footnote AST content before `reusable-footnotes` evaluates them.
 
-For example, this reference appears once here.^[See [@barroso2024]{.bibentry}]
+For example, this reference appears once here.^[See [@silva2026]{.bibentry}]
 
-And the same reference appears again later with exactly the same footnote content.^[See [@barroso2024]{.bibentry}]
+And the same reference appears again later with exactly the same footnote content.^[See [@silva2026]{.bibentry}]
 
 Within the current reusable-footnote scope, both occurrences can point to the same canonical note instead of duplicating the same long reference text.
 
 If the footnote content changes, it is treated as a different note. This makes locators explicit and predictable:
 
 ```qmd
-A proposition.^[See [@barroso2024]{.bibentry}, p. 185.]
+A proposition.^[See [@silva2026]{.bibentry}, p. 185.]
 
-Another proposition.^[See [@barroso2024]{.bibentry}, p. 241.]
+Another proposition.^[See [@silva2026]{.bibentry}, p. 241.]
 ```
 
 The different locator text makes those footnotes distinct.
@@ -93,12 +93,12 @@ The different locator text makes those footnotes distinct.
 The modified `bibentry` implementation replaces only the marked citation span, not the surrounding paragraph.
 
 ```qmd
-For publication details, see [@barroso2024]{.bibentry} and compare the discussion above.
+For publication details, see [@silva2026]{.bibentry} and compare the discussion above.
 ```
 
 Rendered:
 
-For publication details, see [@barroso2024]{.bibentry} and compare the discussion above.
+For publication details, see [@silva2026]{.bibentry} and compare the discussion above.
 
 This is important because the upstream prototype originally operated mainly at paragraph level. The extended implementation walks the AST recursively, so it also works inside nested structures such as native footnotes.
 
@@ -107,24 +107,31 @@ This is important because the upstream prototype originally operated mainly at p
 The author should not copy and paste formatted references into `^[...]`. Instead, the `.bib` entry provides the stable identity:
 
 ```bibtex
-@book{barroso2024,
-  author    = {Barroso, Luís Roberto},
-  title     = {Curso de direito constitucional contemporâneo},
-  edition   = {12},
+@book{silva2026,
+  author    = {Silva, José Afonso da},
+  title     = {Curso de direito constitucional positivo},
+  edition   = {47},
   address   = {São Paulo},
-  publisher = {Saraiva},
-  year      = {2024}
+  publisher = {JusPodivm},
+  year      = {2026},
+  note      = {Coedição Malheiros}
 }
 ```
 
 The document can then choose between two representations without duplicating data:
 
 ```qmd
-Normal citation: [@barroso2024]
+Normal citation: [@silva2026]
 
-Full entry: [@barroso2024]{.bibentry}
+Full entry: [@silva2026]{.bibentry}
 
-Full entry in a footnote: ^[See [@barroso2024]{.bibentry}]
+Full entry in a footnote: ^[See [@silva2026]{.bibentry}]
+```
+
+The same mechanism also works for primary legal sources such as the Constitution:
+
+```qmd
+Full Constitution entry: [@brasil1988]{.bibentry}
 ```
 
 # Current integration
