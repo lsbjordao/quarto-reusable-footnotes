@@ -1,0 +1,13 @@
+# Doctrine
+
+This chapter is a separate HTML page in the rendered book, so its footnote scope starts fresh.
+
+José Afonso da Silva appears again as a new chapter-local footnote.^[See [@silva2026]{.bibentry}]
+
+A second citation in this chapter reuses that local footnote instead of duplicating the full reference.^[See [@silva2026]{.bibentry}]
+
+Marc Bloch is introduced as another source.^[See [@bloch1953]{.bibentry}]
+
+The same historical source is cited again and reuses the chapter-local note.^[See [@bloch1953]{.bibentry}]
+
+This is the book analogue of page-local reuse: each chapter page carries its own footnotes, while duplicate calls inside the chapter are consolidated.
