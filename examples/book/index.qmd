@@ -1,0 +1,11 @@
+# Introduction
+
+In an HTML Quarto book, each chapter is rendered as its own page. `reusable-footnotes` therefore treats each chapter page as an independent footnote scope.
+
+José Afonso da Silva is cited here for the first time in this chapter.^[See [@silva2026]{.bibentry}]
+
+A second occurrence in the same chapter reuses the same local footnote.^[See [@silva2026]{.bibentry}]
+
+The Constitution is a distinct source and receives another footnote.^[See [@brasil1988]{.bibentry}]
+
+The next chapter cites José Afonso da Silva again, but because it is a different rendered HTML page, the footnote is created again there.
