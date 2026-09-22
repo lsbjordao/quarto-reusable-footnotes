@@ -6,7 +6,41 @@ A proposta é deliberadamente simples: continue escrevendo notas com a sintaxe n
 
 A extensão é **100% Lua/Quarto**: não há pós-processamento em Python nem dependência externa para DOCX.
 
-## Exemplo
+## Integração experimental com `bibentry`
+
+O repositório também inclui, em `_extensions/bibentry/`, uma **versão de desenvolvimento derivada de [`fredguth/bibentry`](https://github.com/fredguth/bibentry)**, preservando a licença MIT e a autoria de Frederico Guth. Ela está aqui para testar a integração antes de propormos as mudanças upstream.
+
+A API continua a mesma do projeto original:
+
+```qmd
+Normal citation: [@barroso2024]
+
+Full CSL bibliography entry: [@barroso2024]{.bibentry}
+
+Legal-style footnote: ^[See [@barroso2024]{.bibentry}]
+```
+
+A versão modificada acrescenta:
+
+- uso verdadeiro inline, substituindo apenas o `Span.bibentry`;
+- suporte recursivo, inclusive dentro de footnotes;
+- uma única passagem de `citeproc` sobre o documento completo, preservando ordenação e estilos numéricos;
+- preservação da entrada na bibliografia via `nocite`, sem hacks de conteúdo escondido;
+- AST portátil para HTML, PDF/LaTeX, DOCX e Typst.
+
+No exemplo deste repositório, os filtros são executados nesta ordem:
+
+```yaml
+bibliography: references.bib
+
+filters:
+  - bibentry
+  - reusable-footnotes
+```
+
+Assim, `bibentry` primeiro transforma `[@key]{.bibentry}` na entrada longa definida pelo `csl:` ativo; depois `reusable-footnotes` pode reconhecer e reutilizar footnotes bibliograficamente idênticas.
+
+## Exemplo básico de notas reutilizáveis
 
 ```markdown
 Primeira ocorrência.^[Flora e Funga do Brasil, 2026.]
@@ -68,8 +102,6 @@ Dentro de cada H1:
 4. o número exibido é o número **local daquela seção**, exatamente como o Word numera a nota nativa;
 5. se o mesmo conteúdo reaparecer em outra H1, ele cria uma nova nota nativa naquela seção, em vez de apontar para a numeração da seção anterior.
 
-Isso evita o erro em que, por exemplo, a primeira nota de uma seção aparecia nativamente como `1`, mas sua recorrência era exibida como `3`, `5` ou outro número global do documento.
-
 A implementação continua sem `NOTEREF`, sem campos cacheados e sem pós-processamento.
 
 Se um `reference-doc` personalizado usar numeração contínua em todo o DOCX, é possível restaurar o escopo global:
@@ -123,15 +155,14 @@ Sem Quarto, para desenvolvimento/testes, há um fallback baseado em Pandoc:
 
 ## Testes
 
-Os testes não usam Python. Eles verificam, entre outras coisas:
+Os testes não usam Python. Eles cobrem separadamente:
 
-- 9 notas reais + 9 recorrências no HTML;
-- 9 recorrências PDF geradas como hyperlinks para 7 notas canônicas;
-- ausência de `\footnotemark[n]` sem link nas recorrências do PDF;
-- 9 notas reais + 9 hyperlinks internos no DOCX;
-- numeração DOCX local por seção (`1`, `2`, ...), sem reaproveitar números globais incorretos;
-- uma mesma nota em duas H1 diferentes gera duas notas nativas locais;
-- ausência de `NOTEREF` e de arquivos Python.
+- `bibentry` em citações normais, inline e dentro de footnotes;
+- distinção entre `citation` e `bibliography` layouts do CSL;
+- preservação de referências via `nocite`;
+- reutilização de notas em HTML, PDF/LaTeX e DOCX;
+- integração `bibentry` → `reusable-footnotes`;
+- ausência de `NOTEREF` e de pós-processamento Python.
 
 Execute:
 
@@ -142,16 +173,23 @@ Execute:
 ## Estrutura
 
 ```text
-_extensions/reusable-footnotes/
-├── _extension.yml
-├── reusable-footnotes.lua
-├── reusable-footnotes.css
-└── reusable-footnotes.html
+_extensions/
+├── bibentry/               # development fork for upstream PR
+│   ├── _extension.yml
+│   ├── bibentry.lua
+│   └── LICENSE
+└── reusable-footnotes/
+    ├── _extension.yml
+    ├── reusable-footnotes.lua
+    ├── reusable-footnotes.css
+    └── reusable-footnotes.html
 
+references.bib
 scripts/
 └── render-all.sh
 
 tests/
+├── fixtures/
 └── run.sh
 
 _quarto.yml
@@ -162,4 +200,4 @@ LICENSE
 
 ## Licença
 
-MIT.
+`reusable-footnotes` é MIT. O código vendorizado de `bibentry` mantém a licença MIT original de Frederico Guth em `_extensions/bibentry/LICENSE`.
