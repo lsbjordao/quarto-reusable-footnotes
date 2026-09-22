@@ -1,6 +1,6 @@
 -- reusable-footnotes.lua
--- Quarto/Pandoc filter: repeated footnotes with exactly the same AST content
--- share the same number within the current rendered document/page.
+-- Quarto/Pandoc filter: repeated footnotes with the same AST content share a
+-- single real note within the current rendered document/page.
 
 local function note_key(note)
   -- Treat editorial line wrapping as ordinary whitespace. This means the same
@@ -77,23 +77,38 @@ local function append_html_backlinks(note, number, total_occurrences)
   return note
 end
 
-
-local function append_docx_group_marker(note, group_id)
-  local marker = string.format("__REUSABLE_FOOTNOTE_GROUP_%06d__", group_id)
-  local xml = string.format(
-    '<w:r><w:rPr><w:vanish/></w:rPr><w:t>%s</w:t></w:r>',
-    marker
+local function docx_bookmark_start(bookmark_id, bookmark_name)
+  return pandoc.RawInline(
+    'openxml',
+    string.format(
+      '<w:bookmarkStart w:id="%d" w:name="%s"/>',
+      bookmark_id,
+      bookmark_name
+    )
   )
-  local raw = pandoc.RawInline('openxml', xml)
-  local blocks = note.content
-  local last = blocks[#blocks]
-  if last and (last.t == 'Para' or last.t == 'Plain') then
-    table.insert(last.content, raw)
-  else
-    table.insert(blocks, pandoc.Plain({ raw }))
-  end
-  note.content = blocks
-  return note
+end
+
+local function docx_bookmark_end(bookmark_id)
+  return pandoc.RawInline(
+    'openxml',
+    string.format('<w:bookmarkEnd w:id="%d"/>', bookmark_id)
+  )
+end
+
+local function docx_noteref(bookmark_name, cached_number)
+  -- NOTEREF is Word's native cross-reference field for multiple references to
+  -- one footnote/endnote. \f applies the Footnote Reference character style;
+  -- \h makes the field a hyperlink to the bookmarked original reference.
+  -- w:dirty asks Word to refresh the cached field result when appropriate.
+  local xml = string.format(
+    '<w:fldSimple w:instr=" NOTEREF %s \\f \\h " w:dirty="true">' ..
+      '<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr>' ..
+      '<w:t>%d</w:t></w:r>' ..
+    '</w:fldSimple>',
+    bookmark_name,
+    cached_number
+  )
+  return pandoc.RawInline('openxml', xml)
 end
 
 local function include_html_assets()
@@ -113,28 +128,11 @@ function Pandoc(doc)
     end
   })
 
-  -- DOCX needs a post-render OOXML pass. Give all members of a repeated group
-  -- the same invisible marker so the post-processor can recover the semantic
-  -- grouping even when Pandoc splits equivalent text into different Word runs.
-  if FORMAT:match('docx') or FORMAT:match('openxml') then
-    local group_for_key = {}
-    local next_group = 0
-    return doc:walk({
-      Note = function(note)
-        local key = note_key(note)
-        if (counts[key] or 0) <= 1 then return note end
-        if group_for_key[key] == nil then
-          next_group = next_group + 1
-          group_for_key[key] = next_group
-        end
-        return append_docx_group_marker(note, group_for_key[key])
-      end
-    })
-  end
-
   local canonical_number = {}
   local occurrence = {}
+  local docx_bookmarks = {}
   local next_number = 0
+  local next_bookmark_id = 2000000000
 
   local transformed = doc:walk({
     Note = function(note)
@@ -148,7 +146,22 @@ function Pandoc(doc)
 
         if FORMAT:match('html') and cfg.backlinks then
           note = append_html_backlinks(note, next_number, counts[key])
+        elseif (FORMAT:match('docx') or FORMAT:match('openxml')) and counts[key] > 1 then
+          -- Word's NOTEREF field requires a bookmark around the original
+          -- footnote reference mark in the document body (not inside the note).
+          next_bookmark_id = next_bookmark_id + 1
+          local bookmark = {
+            id = next_bookmark_id,
+            name = string.format('rfn_ref_%06d', next_number),
+          }
+          docx_bookmarks[key] = bookmark
+          return {
+            docx_bookmark_start(bookmark.id, bookmark.name),
+            note,
+            docx_bookmark_end(bookmark.id),
+          }
         end
+
         return note
       end
 
@@ -168,6 +181,12 @@ function Pandoc(doc)
       elseif FORMAT:match('latex') then
         -- Reuse the already-created marker without creating another footnote.
         return pandoc.RawInline('latex', string.format('\\footnotemark[%d]', number))
+      elseif FORMAT:match('docx') or FORMAT:match('openxml') then
+        local bookmark = docx_bookmarks[key]
+        if bookmark then
+          return docx_noteref(bookmark.name, number)
+        end
+        return note
       else
         -- Conservative fallback for formats without a dedicated renderer.
         return note
