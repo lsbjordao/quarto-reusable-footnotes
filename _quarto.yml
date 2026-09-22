@@ -1,0 +1,24 @@
+project:
+  type: default
+  output-dir: _output
+  post-render:
+    - python _extensions/reusable-footnotes/reusable-footnotes-docx.py
+
+filters:
+  - reusable-footnotes
+
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+
+format:
+  html:
+    toc: true
+    html-math-method: katex
+  pdf:
+    toc: true
+    pdf-engine: lualatex
+    mainfont: "DejaVu Serif"
+    monofont: "DejaVu Sans Mono"
+  docx:
+    toc: false

@@ -1,0 +1,19 @@
+/* reusable-footnotes: intentionally subtle additions to native footnotes */
+.reusable-footnote-ref {
+  white-space: nowrap;
+}
+
+.reusable-footnote-backlinks {
+  white-space: nowrap;
+}
+
+.reusable-footnote-backlinks .reusable-footnote-back {
+  text-decoration: none;
+  margin-left: 0.12em;
+  opacity: 0.72;
+}
+
+.reusable-footnote-backlinks .reusable-footnote-back:hover,
+.reusable-footnote-backlinks .reusable-footnote-back:focus {
+  opacity: 1;
+}

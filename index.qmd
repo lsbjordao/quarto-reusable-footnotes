@@ -1,0 +1,123 @@
+---
+title: "reusable-footnotes"
+subtitle: "Notas de rodapé reutilizáveis para Quarto"
+author: "Lucas Sá Barreto Jordão"
+date: "2026-09-21"
+---
+
+# Ideia
+
+`reusable-footnotes` mantém a sintaxe normal de notas de rodapé do
+Quarto/Pandoc. Quando **duas ou mais notas têm exatamente o mesmo conteúdo**,
+as ocorrências posteriores remetem ao mesmo número em vez de criarem uma nova
+nota.
+
+No HTML, os retornos aparecem da forma mais discreta possível: uma pequena
+seta de retorno para cada ocorrência. Em um book ou website, cada arquivo/página HTML é renderizado separadamente;
+por isso a numeração e a reutilização recomeçam naturalmente em outra página.
+
+# 1. Nota inline `^[...]`
+
+A primeira afirmação usa uma nota inline.^[Flora e Funga do Brasil. Jardim
+Botânico do Rio de Janeiro, 2026.]
+
+Alguns parágrafos depois, o mesmo conteúdo volta a ser citado.^[Flora e Funga
+do Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+
+E uma terceira ocorrência continua remetendo à mesma nota.^[Flora e Funga do
+Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+
+```markdown
+A primeira afirmação.^[Flora e Funga do Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+
+Outra afirmação.^[Flora e Funga do Brasil. Jardim Botânico do Rio de Janeiro, 2026.]
+```
+
+# 2. Nota nomeada `[^id]`
+
+A sintaxe nomeada continua funcionando normalmente.[^mapbiomas]
+
+A mesma nota pode ser chamada novamente no texto.[^mapbiomas]
+
+E novamente, sem repetir o conteúdo no rodapé.[^mapbiomas]
+
+[^mapbiomas]: MAPBIOMAS. Coleção de mapas anuais de cobertura e uso da terra do Brasil. 2026.
+
+```markdown
+Texto A.[^mapbiomas]
+
+Texto B.[^mapbiomas]
+
+[^mapbiomas]: MAPBIOMAS. Coleção de mapas anuais de cobertura e uso da terra do Brasil. 2026.
+```
+
+# 3. Notas diferentes intercaladas
+
+Uma fonte pode aparecer primeiro.^[IUCN. *Guidelines for Using the IUCN Red
+List Categories and Criteria*. Version 16, 2024.]
+
+Uma segunda nota, com conteúdo diferente, recebe outro número.^[Um comentário
+metodológico independente, que deve permanecer como nota própria.]
+
+A fonte IUCN reaparece e recupera o número da primeira ocorrência.^[IUCN.
+*Guidelines for Using the IUCN Red List Categories and Criteria*. Version 16,
+2024.]
+
+A nota metodológica também pode reaparecer com o número que já recebeu.^[Um
+comentário metodológico independente, que deve permanecer como nota própria.]
+
+# 4. Conteúdo rico
+
+Notas com **ênfase**, `código` e links também podem ser reutilizadas.^[Exemplo
+com **negrito**, `código` e um link para [Quarto](https://quarto.org/).]
+
+O conteúdo rico idêntico continua sendo reconhecido.^[Exemplo com **negrito**,
+`código` e um link para [Quarto](https://quarto.org/).]
+
+# 5. Nota com vários parágrafos
+
+Uma nota nomeada pode conter mais de um parágrafo.[^longa]
+
+Depois ela pode ser chamada novamente.[^longa]
+
+[^longa]: Primeiro parágrafo de uma nota mais longa.
+
+    Segundo parágrafo da mesma nota. A estrutura completa participa da
+    comparação, portanto a reutilização não depende apenas do primeiro
+    parágrafo.
+
+# 6. Correspondência é exata
+
+Estas duas notas são diferentes porque o conteúdo não é exatamente o mesmo.^[A
+fonte foi consultada em 2025.]
+
+Esta recebe outro número.^[A fonte foi consultada em 2026.]
+
+Isso é intencional: a extensão não tenta inferir que textos parecidos se
+referem à mesma fonte.
+
+# 7. Mistura de formas
+
+O mecanismo não depende de a nota original ter sido escrita inline ou com um
+identificador. Pandoc transforma ambas em nós `Note`; a extensão compara o
+conteúdo resultante.
+
+Uma nota inline aparece aqui.^[Esta nota demonstra a correspondência entre
+formas de autoria.]
+
+A mesma frase pode ser definida como nota nomeada e reutilizada abaixo.[^mista]
+
+[^mista]: Esta nota demonstra a correspondência entre formas de autoria.
+
+# Comportamento por formato
+
+| Formato | Recorrência | Rodapé |
+|---|---|---|
+| HTML | mesmo número e link para a nota original | uma nota; retorno discreto por ocorrência |
+| PDF | mesmo número sem criar uma segunda nota | uma nota real |
+| DOCX | mesmo número em sobrescrito, com hiperlink interno | uma nota real após o pós-processamento |
+
+No HTML de um website/book, a unidade natural é a página renderizada. Assim,
+a mesma nota usada em outro `.qmd` recebe a numeração apropriada daquela nova
+página. Em saídas monolíticas, como PDF e DOCX, o escopo é o documento
+renderizado.

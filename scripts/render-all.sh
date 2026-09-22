@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+mkdir -p _output
+
+if command -v quarto >/dev/null 2>&1; then
+  exec quarto render
+fi
+
+echo "quarto não encontrado; usando fallback Pandoc para os três formatos." >&2
+FILTER="_extensions/reusable-footnotes/reusable-footnotes.lua"
+CSS="_extensions/reusable-footnotes/reusable-footnotes.css"
+FIXER="_extensions/reusable-footnotes/reusable-footnotes-docx.py"
+
+pandoc index.qmd \
+  -f markdown \
+  --standalone \
+  --embed-resources \
+  --toc \
+  --lua-filter="$FILTER" \
+  --css="$CSS" \
+  --metadata title="reusable-footnotes" \
+  -o _output/index.html
+
+pandoc index.qmd \
+  -f markdown \
+  --standalone \
+  --toc \
+  --lua-filter="$FILTER" \
+  --pdf-engine=lualatex \
+  -V geometry:margin=25mm \
+  -V mainfont="DejaVu Serif" \
+  -V monofont="DejaVu Sans Mono" \
+  -o _output/index.pdf
+
+pandoc index.qmd \
+  -f markdown \
+  --standalone \
+  --lua-filter="$FILTER" \
+  -o _output/index.docx
+
+python "$FIXER" _output/index.docx
+
+echo "Saídas geradas em $ROOT/_output" >&2
