@@ -1,0 +1,31 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "reusable-footnotes — website example"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: doctrine.qmd
+        text: Doctrine
+      - href: constitution.qmd
+        text: Constitution
+
+bibliography: ../../references.bib
+suppress-bibliography: true
+
+filters:
+  - ../../_extensions/bibentry/bibentry.lua
+  - ../../_extensions/reusable-footnotes/reusable-footnotes.lua
+
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+  scope: page
+  numbering: page
+
+format:
+  html:
+    toc: true
