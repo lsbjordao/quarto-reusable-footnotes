@@ -1,203 +1,231 @@
+<p align="center">
+  <img src="assets/reusable-footnotes-logo.png" alt="reusable-footnotes logo" width="640">
+</p>
+
 # reusable-footnotes
 
-Extensão Quarto para **reutilizar notas de rodapé idênticas sem gerar novos números**.
+Quarto extension for **page-local reusable footnotes**.
 
-A proposta é deliberadamente simples: continue escrevendo notas com a sintaxe normal do Pandoc/Quarto (`^[...]` ou `[^id]`). Se o conteúdo AST de duas notas for exatamente igual, apenas a primeira cria uma nota real; as demais remetem ao mesmo número.
+The main use case is printable scholarly writing—especially **Law**, but also History and other Humanities—where bibliographic references are placed in page footnotes. The same source may need to appear again on a later page, while repeated citations on the *same* page should not print the same long footnote twice.
 
-A extensão é **100% Lua/Quarto**: não há pós-processamento em Python nem dependência externa para DOCX.
+The intended behavior is:
 
-## Integração experimental com `bibentry`
+```text
+page 1     A¹ ... A¹ ... B²
+           ─────────────────
+           ¹ Full reference A
+           ² Full reference B
 
-O repositório também inclui, em `_extensions/bibentry/`, uma **versão de desenvolvimento derivada de [`fredguth/bibentry`](https://github.com/fredguth/bibentry)**, preservando a licença MIT e a autoria de Frederico Guth. Ela está aqui para testar a integração antes de propormos as mudanças upstream.
-
-A API continua a mesma do projeto original:
-
-```qmd
-Normal citation: [@barroso2024]
-
-Full CSL bibliography entry: [@barroso2024]{.bibentry}
-
-Legal-style footnote: ^[See [@barroso2024]{.bibentry}]
+page 2     A³ ... A³ ... B⁴       # continuous numbering
+           ─────────────────
+           ³ Full reference A
+           ⁴ Full reference B
 ```
 
-A versão modificada acrescenta:
+or, with numbering restarted on every page:
 
-- uso verdadeiro inline, substituindo apenas o `Span.bibentry`;
-- suporte recursivo, inclusive dentro de footnotes;
-- uma única passagem de `citeproc` sobre o documento completo, preservando ordenação e estilos numéricos;
-- preservação da entrada na bibliografia via `nocite`, sem hacks de conteúdo escondido;
-- AST portátil para HTML, PDF/LaTeX, DOCX e Typst.
+```text
+page 1     A¹ ... A¹ ... B²
+page 2     A¹ ... A¹ ... B²
+```
 
-No exemplo deste repositório, os filtros são executados nesta ordem:
+The source identity is reused; the physical footnote instance is page-local.
+
+## Writing notes
+
+Keep using normal Pandoc/Quarto footnotes:
+
+```qmd
+First occurrence.^[Flora e Funga do Brasil, 2026.]
+
+Another occurrence.^[Flora e Funga do Brasil, 2026.]
+```
+
+For bibliographic footnotes, this repository also vendors a development version of Fred Guth's [`bibentry`](https://github.com/fredguth/bibentry), preserving its MIT license and authorship:
+
+```qmd
+Normal citation: [@silva2026]
+
+Full CSL entry: [@silva2026]{.bibentry}
+
+Full CSL entry in a footnote: ^[See [@silva2026]{.bibentry}]
+```
+
+`@silva2026` remains an ordinary Pandoc citation. `.bibentry` simply asks for the bibliography-layout representation of the same BibTeX entry.
+
+## Configuration
 
 ```yaml
-bibliography: references.bib
-
 filters:
   - bibentry
   - reusable-footnotes
+
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+  scope: page
+  numbering: continuous
+  docx-scope: pagebreak
 ```
 
-Assim, `bibentry` primeiro transforma `[@key]{.bibentry}` na entrada longa definida pelo `csl:` ativo; depois `reusable-footnotes` pode reconhecer e reutilizar footnotes bibliograficamente idênticas.
+Options:
 
-## Exemplo básico de notas reutilizáveis
+- `enabled`: enable/disable the filter.
+- `backlinks`: add discreet return links in HTML.
+- `scope`: `page` (default) or legacy `document` reuse for PDF/LaTeX.
+- `numbering`: `continuous` or `page`.
+- `docx-scope`: `pagebreak`, `section`, or `document`.
 
-```markdown
-Primeira ocorrência.^[Flora e Funga do Brasil, 2026.]
+## PDF / LaTeX
 
-Segunda ocorrência.^[Flora e Funga do Brasil, 2026.]
+PDF is the most complete implementation of the page-local model.
+
+With:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: continuous
 ```
 
-Em vez de `1` e `2`, as duas chamadas mostram `1`, com uma única nota no rodapé. No HTML, três ocorrências produzem retornos discretos como:
+identical notes are printed only once on each **physical PDF page**, but may appear again on later pages. Numbering continues through the document.
+
+With:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: page
+```
+
+identical notes are still page-local, but the footnote counter restarts at `1` on every physical page.
+
+The implementation uses LaTeX's `fixfoot` package for page-aware repeated notes and `perpage` when page-local numbering is requested. These packages exchange page information through the LaTeX auxiliary file, so normal multi-pass PDF compilation determines the real page after layout.
+
+## DOCX
+
+Word has two distinct issues: **numbering** and **detecting physical page boundaries**.
+
+### Numbering
+
+WordprocessingML supports native footnote numbering restart with:
+
+```xml
+<w:footnotePr>
+  <w:numRestart w:val="eachPage"/>
+</w:footnotePr>
+```
+
+The repository includes:
 
 ```text
-1. Flora e Funga do Brasil, 2026. ↩︎ ↩︎ ↩︎
+_extensions/reusable-footnotes/reference-page.docx
 ```
 
-## Instalação local
-
-Copie `_extensions/reusable-footnotes/` para o projeto e adicione:
+Use it when `numbering: page` is desired:
 
 ```yaml
-filters:
-  - reusable-footnotes
+format:
+  docx:
+    reference-doc: _extensions/reusable-footnotes/reference-page.docx
+
+reusable-footnotes:
+  numbering: page
 ```
 
-Opcionalmente:
+For continuous DOCX numbering, omit that `reference-doc` (or use your own continuous-numbering reference document) and set `numbering: continuous`.
+
+### Page-local reuse
+
+Pandoc's AST exists **before Word performs pagination**. Therefore a Lua filter cannot know a natural Word page break caused by later font metrics, printer settings, margins, or editing.
+
+For deterministic DOCX page-local reuse, use Quarto's native pagebreak:
+
+```qmd
+Page one text.^[Same note.]
+
+Again on page one.^[Same note.]
+
+{{< pagebreak >}}
+
+Page two text.^[Same note.]
+```
+
+with:
 
 ```yaml
 reusable-footnotes:
-  enabled: true
-  backlinks: true
-  docx-scope: section
+  docx-scope: pagebreak
 ```
 
-Nenhum `post-render` é necessário.
+Within each explicit pagebreak-delimited page, repeated notes share the canonical note. After the pagebreak, the same content creates a new real footnote.
 
-## Como funciona por formato
+`docx-scope: section` retains the older H1-based behavior, and `docx-scope: document` provides document-wide reuse.
 
-### HTML
+Automatic physical-page deduplication in a freely flowing DOCX would require a **post-layout Word/office-automation step**, because the final pages do not exist yet at Lua-filter time. `reusable-footnotes` deliberately remains a no-Python, static Quarto/Pandoc extension.
 
-A primeira ocorrência permanece como uma nota nativa. As ocorrências posteriores são links para a mesma nota. A nota canônica recebe backlinks discretos (`↩︎`) para as chamadas adicionais.
+## HTML
 
-### PDF / LaTeX
+HTML has no physical pages in a standalone scrolling document, so a single HTML file is treated as one logical page.
 
-A primeira ocorrência gera a nota normalmente e recebe um `\label` interno quando será reutilizada. As chamadas seguintes são renderizadas como:
+For a Quarto **website or HTML book**, each `.qmd` is rendered as its own HTML page. The filter state naturally resets for each render, so each website/book page gets its own canonical footnotes. A source can therefore appear in the footnotes of multiple HTML pages while repeated calls within a single page are reused.
 
-```tex
-\hyperref[rfn-note-...]{\textsuperscript{\ref*{rfn-note-...}}}
+## Integration with `bibentry`
+
+The vendored `bibentry` development version adds:
+
+- true inline replacement, preserving surrounding prose;
+- recursive AST support, including `.bibentry` inside native footnotes;
+- one citeproc pass over the complete document, preserving numeric CSL ordering;
+- bibliography preservation through `nocite` rather than hidden CSS/Typst content;
+- portable AST output for HTML, PDF/LaTeX, DOCX, and Typst.
+
+The intention is to upstream those improvements to `fredguth/bibentry` rather than maintain a competing bibliography renderer here.
+
+## Equality rule
+
+Footnotes are matched using their normalized Pandoc AST. `SoftBreak` is treated as an ordinary space, and occurrence-specific citation note numbers are ignored. Formatting, links, citation identities, locators, and multiple paragraphs remain significant.
+
+That means:
+
+```qmd
+^[See [@silva2026]{.bibentry}]
 ```
 
-Assim, o número reutilizado continua sendo o mesmo **e também permanece clicável**, apontando para a nota canônica. Não são usados marcadores `\footnotemark[n]` sem link para recorrências.
+matches another identical occurrence, while:
 
-### DOCX
-
-O DOCX exige um cuidado adicional: o writer padrão do Pandoc/Quarto pode reiniciar a numeração das notas a cada seção de nível 1. Por isso, desde a versão **0.2.2**, a extensão também trata a reutilização com escopo de seção por padrão.
-
-Dentro de cada H1:
-
-1. a primeira ocorrência continua sendo uma nota nativa do Word;
-2. se aquela nota for reutilizada na mesma seção, o filtro cria um bookmark invisível dentro da nota em `footnotes.xml`;
-3. as ocorrências seguintes viram hyperlinks internos em estilo `FootnoteReference`;
-4. o número exibido é o número **local daquela seção**, exatamente como o Word numera a nota nativa;
-5. se o mesmo conteúdo reaparecer em outra H1, ele cria uma nova nota nativa naquela seção, em vez de apontar para a numeração da seção anterior.
-
-A implementação continua sem `NOTEREF`, sem campos cacheados e sem pós-processamento.
-
-Se um `reference-doc` personalizado usar numeração contínua em todo o DOCX, é possível restaurar o escopo global:
-
-```yaml
-reusable-footnotes:
-  docx-scope: document
+```qmd
+^[See [@silva2026]{.bibentry}, p. 185.]
 ```
 
-## Configuração
+is a distinct footnote from:
 
-```yaml
-reusable-footnotes:
-  enabled: true
-  backlinks: true
-  docx-scope: section
+```qmd
+^[See [@silva2026]{.bibentry}, p. 241.]
 ```
 
-- `enabled`: liga/desliga a extensão no documento.
-- `backlinks`: no HTML, adiciona um retorno discreto para cada ocorrência adicional.
-- `docx-scope`: `section` (padrão) acompanha a reinicialização das notas em cada H1; `document` usa numeração contínua no DOCX.
-
-## Escopo
-
-- **HTML em website/book:** cada `.qmd` é renderizado como uma página; o estado da extensão reinicia nessa nova renderização.
-- **HTML de documento único:** o escopo é o documento.
-- **PDF:** o escopo é o documento monolítico renderizado.
-- **DOCX:** o padrão é cada seção H1, acompanhando a numeração nativa do Word/Pandoc; pode ser alterado para `document`.
-
-## Regra de igualdade
-
-A versão 0.2.2 usa correspondência **exata do AST da nota**, com uma única normalização deliberada: `SoftBreak` é tratado como espaço. Assim, quebrar a mesma nota em linhas diferentes no arquivo-fonte não muda sua identidade.
-
-Formatação, links, citações e múltiplos parágrafos continuam fazendo parte da identidade. Isso evita heurísticas bibliográficas ou comparações aproximadas.
-
-## Renderização
-
-Com Quarto:
+## Render
 
 ```bash
 quarto render
 ```
 
-O `index.qmd` gera HTML, PDF e DOCX em `_output/`.
+The example `index.qmd` generates HTML, PDF, and DOCX in `_output/` and contains explicit multi-page examples demonstrating recurrence of the same bibliographic source on later pages.
 
-Sem Quarto, para desenvolvimento/testes, há um fallback baseado em Pandoc:
+For development without the Quarto CLI:
 
 ```bash
 ./scripts/render-all.sh
 ```
 
-## Testes
-
-Os testes não usam Python. Eles cobrem separadamente:
-
-- `bibentry` em citações normais, inline e dentro de footnotes;
-- distinção entre `citation` e `bibliography` layouts do CSL;
-- preservação de referências via `nocite`;
-- reutilização de notas em HTML, PDF/LaTeX e DOCX;
-- integração `bibentry` → `reusable-footnotes`;
-- ausência de `NOTEREF` e de pós-processamento Python.
-
-Execute:
+## Tests
 
 ```bash
 ./tests/run.sh
 ```
 
-## Estrutura
+The tests cover `bibentry`, HTML reuse, page-aware LaTeX/PDF behavior, DOCX explicit-pagebreak scopes, and integration between `bibentry` and `reusable-footnotes`.
 
-```text
-_extensions/
-├── bibentry/               # development fork for upstream PR
-│   ├── _extension.yml
-│   ├── bibentry.lua
-│   └── LICENSE
-└── reusable-footnotes/
-    ├── _extension.yml
-    ├── reusable-footnotes.lua
-    ├── reusable-footnotes.css
-    └── reusable-footnotes.html
+## License
 
-references.bib
-scripts/
-└── render-all.sh
-
-tests/
-├── fixtures/
-└── run.sh
-
-_quarto.yml
-index.qmd
-README.md
-LICENSE
-```
-
-## Licença
-
-`reusable-footnotes` é MIT. O código vendorizado de `bibentry` mantém a licença MIT original de Frederico Guth em `_extensions/bibentry/LICENSE`.
+`reusable-footnotes` is MIT licensed. The vendored `bibentry` code keeps Frederico Guth's original MIT license in `_extensions/bibentry/LICENSE`.
