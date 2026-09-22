@@ -1,0 +1,15 @@
+---
+title: "Doctrine"
+---
+
+# Chapter 2 — numbering continues
+
+This chapter is a new HTML page, so José Afonso da Silva receives a new page-local footnote. Because numbering is global, that footnote is **3**.^[See [@silva2026]{.bibentry}]
+
+A repeated occurrence in this chapter reuses footnote **3**.^[See [@silva2026]{.bibentry}]
+
+A historical source receives footnote **4**.^[See [@bloch1953]{.bibentry}]
+
+Repeating it in the same chapter reuses footnote **4**.^[See [@bloch1953]{.bibentry}]
+
+The third chapter therefore begins at **5**.
