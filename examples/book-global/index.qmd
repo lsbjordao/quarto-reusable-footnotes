@@ -1,0 +1,15 @@
+---
+title: "Opening chapter"
+---
+
+# Chapter 1 — global footnote numbering
+
+This HTML book keeps reusable-footnote identity local to each chapter page while continuing the displayed footnote numbers across chapters.
+
+José Afonso da Silva is cited first.^[See [@silva2026]{.bibentry}]
+
+The same citation appears again in this chapter and reuses footnote **1**.^[See [@silva2026]{.bibentry}]
+
+The Constitution receives footnote **2**.^[See [@brasil1988]{.bibentry}]
+
+The next chapter therefore begins at **3**, even though its reusable-footnote scope is independent.
