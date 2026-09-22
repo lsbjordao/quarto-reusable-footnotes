@@ -25,3 +25,4 @@ reusable-footnotes:
 format:
   html:
     toc: true
+    include-in-header: ../../includes/google-tag.html
