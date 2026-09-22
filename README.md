@@ -89,6 +89,7 @@ format:
 - `scope`: `page` (default) or `document` for legacy document-wide reuse in PDF/LaTeX.
 - `numbering`: `page` or `continuous`.
 - `docx-scope`: `pagebreak`, `section`, or `document`.
+- `html-order`: ordered list of `.qmd` pages used when HTML website/book numbering should continue globally across separately rendered pages.
 
 ### Page-local reuse with continuous numbering
 
@@ -113,13 +114,7 @@ page 3: 5, 6
 
 Repeated occurrences on each page reuse that page's local canonical number.
 
-For continuous DOCX numbering, omit `reference-page.docx` or use your own reference DOCX with continuous footnote numbering:
-
-```yaml
-format:
-  docx:
-    toc: false
-```
+For continuous DOCX numbering, omit `reference-page.docx` or use your own reference DOCX with continuous footnote numbering.
 
 ### Page-local reuse with numbering restarted on every page
 
@@ -263,7 +258,52 @@ Automatic physical-page deduplication in a freely flowing DOCX would require a *
 
 HTML has no physical pages in a standalone scrolling document, so a single HTML file is treated as one logical page.
 
-For a Quarto **website or HTML book**, each `.qmd` is rendered as its own HTML page. The filter state naturally resets for each render, so each website/book page gets its own canonical footnotes. A source can therefore appear in the footnotes of multiple HTML pages while repeated calls within a single page are reused.
+For a Quarto **website or HTML book**, each `.qmd` is rendered as its own HTML page. Reuse remains local to that rendered page, but numbering can follow either policy.
+
+### HTML page-local numbering
+
+Each page starts at `1`:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: page
+```
+
+Examples:
+
+- `examples/website/`
+- `examples/book/`
+
+### HTML global numbering
+
+The page still owns its own footnotes, but displayed numbers continue through the website/book. Because Quarto renders HTML pages independently, declare their deterministic order:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: continuous
+  html-order:
+    - index.qmd
+    - doctrine.qmd
+    - constitution.qmd
+```
+
+The extension counts canonical footnotes in preceding source pages and applies the corresponding HTML numbering offset while keeping all anchors page-local.
+
+Examples:
+
+- `examples/website-global/` → `1, 2` / `3, 4` / `5, 6`
+- `examples/book-global/` → `1, 2` / `3, 4` / `5, 6`
+
+Preview all four modes with:
+
+```bash
+quarto preview examples/website
+quarto preview examples/website-global
+quarto preview examples/book
+quarto preview examples/book-global
+```
 
 ## Integration with `bibentry`
 
@@ -307,7 +347,7 @@ quarto render
 
 The example `index.qmd` generates HTML, PDF, and DOCX in `_output/` and contains explicit multi-page examples demonstrating recurrence of the same bibliographic source on later pages.
 
-For development without the Quarto CLI:
+To render the main project and all four HTML examples:
 
 ```bash
 ./scripts/render-all.sh
