@@ -118,15 +118,19 @@ No PDF, a primeira nota recebe internamente um `\label`. Cada número repetido �
 renderizado como um `\hyperref` para esse mesmo destino. Assim, **todas as
 ocorrências do número são clicáveis**, não apenas a primeira.
 
-No DOCX, a primeira ocorrência permanece uma nota nativa do Word. Para uma nota
-que será reutilizada, a extensão cria um bookmark invisível dentro da própria
-nota em `footnotes.xml`. As ocorrências seguintes são hyperlinks internos com o
-estilo `FootnoteReference` e o número canônico explícito.
+No DOCX, a numeração nativa pode reiniciar em cada seção H1. Por isso, a
+extensão usa `docx-scope: section` por padrão: a primeira ocorrência em cada
+seção permanece uma nota nativa do Word, e as recorrências daquela mesma seção
+usam o número local da nota canônica.
 
-Isso evita campos `NOTEREF` e, portanto, evita resultados cacheados ou
-recalculados incorretamente pelo Word. Cada conteúdo diferente mantém seu
-próprio número, enquanto ocorrências realmente iguais reutilizam o número da
-nota original.
+Por exemplo, na seção "Notas diferentes intercaladas", a primeira fonte é a
+nota `1`, a segunda é a nota `2`, e as duas recorrências voltam respectivamente
+a `1` e `2`. Ao começar a seção seguinte, a primeira nota pode voltar a ser
+`1`, exatamente como na numeração nativa do Word.
+
+Os hyperlinks reutilizados apontam para bookmarks invisíveis dentro das notas
+canônicas em `footnotes.xml`. Não são usados campos `NOTEREF` nem
+pós-processamento.
 
 # Comportamento por formato
 
@@ -134,9 +138,9 @@ nota original.
 |---|---|---|
 | HTML | mesmo número e link para a nota original | uma nota; retorno discreto por ocorrência |
 | PDF | mesmo número, sempre clicável | uma única nota real |
-| DOCX | mesmo número em hyperlink interno para a nota canônica | uma única nota real; sem `NOTEREF` e sem pós-processamento |
+| DOCX | mesmo número local da seção, em hyperlink interno | uma única nota real por conteúdo em cada seção H1 |
 
-No HTML de um website/book, a unidade natural é a página renderizada. Assim,
-a mesma nota usada em outro `.qmd` recebe a numeração apropriada daquela nova
-página. Em saídas monolíticas, como PDF e DOCX, o escopo é o documento
-renderizado.
+No HTML de um website/book, a unidade natural é a página renderizada. No PDF,
+o escopo é o documento. No DOCX, o padrão é a seção H1 para acompanhar a
+reinicialização nativa da numeração; projetos com numeração contínua podem usar
+`docx-scope: document`.
