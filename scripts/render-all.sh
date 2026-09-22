@@ -8,8 +8,10 @@ mkdir -p _output
 if command -v quarto >/dev/null 2>&1; then
   quarto render
   quarto render examples/website
+  quarto render examples/website-global
   quarto render examples/book
-  echo "Main outputs and HTML examples rendered." >&2
+  quarto render examples/book-global
+  echo "Main outputs and all four HTML examples rendered." >&2
   exit 0
 fi
 
@@ -51,4 +53,4 @@ pandoc index.qmd \
   --citeproc \
   -o _output/index.docx
 
-echo "Saídas principais geradas em $ROOT/_output; exemplos website/book exigem Quarto CLI." >&2
+echo "Saídas principais geradas em $ROOT/_output; exemplos HTML exigem Quarto CLI." >&2
