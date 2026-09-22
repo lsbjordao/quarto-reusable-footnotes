@@ -35,6 +35,7 @@ Opcionalmente:
 reusable-footnotes:
   enabled: true
   backlinks: true
+  docx-scope: section
 ```
 
 Nenhum `post-render` é necessário.
@@ -57,16 +58,26 @@ Assim, o número reutilizado continua sendo o mesmo **e também permanece clicá
 
 ### DOCX
 
-A implementação usa somente Lua + OpenXML emitido pelo próprio Pandoc:
+O DOCX exige um cuidado adicional: o writer padrão do Pandoc/Quarto pode reiniciar a numeração das notas a cada seção de nível 1. Por isso, desde a versão **0.2.2**, a extensão também trata a reutilização com escopo de seção por padrão.
+
+Dentro de cada H1:
 
 1. a primeira ocorrência continua sendo uma nota nativa do Word;
-2. se aquela nota for reutilizada, o filtro cria um bookmark invisível **dentro da própria nota** em `footnotes.xml`;
-3. as ocorrências seguintes viram hyperlinks internos em estilo `FootnoteReference`, exibindo explicitamente o número canônico;
-4. o hyperlink aponta diretamente para o bookmark da nota original.
+2. se aquela nota for reutilizada na mesma seção, o filtro cria um bookmark invisível dentro da nota em `footnotes.xml`;
+3. as ocorrências seguintes viram hyperlinks internos em estilo `FootnoteReference`;
+4. o número exibido é o número **local daquela seção**, exatamente como o Word numera a nota nativa;
+5. se o mesmo conteúdo reaparecer em outra H1, ele cria uma nova nota nativa naquela seção, em vez de apontar para a numeração da seção anterior.
 
-A versão 0.2.1 não usa mais campos `NOTEREF`. Isso evita resultados de campo cacheados ou desatualizados que podiam fazer referências de notas diferentes exibirem o mesmo número antes de o Word recalcular os campos.
+Isso evita o erro em que, por exemplo, a primeira nota de uma seção aparecia nativamente como `1`, mas sua recorrência era exibida como `3`, `5` ou outro número global do documento.
 
-O DOCX continua contendo uma única nota real para cada conteúdo reutilizado.
+A implementação continua sem `NOTEREF`, sem campos cacheados e sem pós-processamento.
+
+Se um `reference-doc` personalizado usar numeração contínua em todo o DOCX, é possível restaurar o escopo global:
+
+```yaml
+reusable-footnotes:
+  docx-scope: document
+```
 
 ## Configuração
 
@@ -74,22 +85,23 @@ O DOCX continua contendo uma única nota real para cada conteúdo reutilizado.
 reusable-footnotes:
   enabled: true
   backlinks: true
+  docx-scope: section
 ```
 
 - `enabled`: liga/desliga a extensão no documento.
 - `backlinks`: no HTML, adiciona um retorno discreto para cada ocorrência adicional.
+- `docx-scope`: `section` (padrão) acompanha a reinicialização das notas em cada H1; `document` usa numeração contínua no DOCX.
 
 ## Escopo
 
 - **HTML em website/book:** cada `.qmd` é renderizado como uma página; o estado da extensão reinicia nessa nova renderização.
 - **HTML de documento único:** o escopo é o documento.
-- **PDF/DOCX:** o escopo é o documento monolítico renderizado.
-
-Isso produz o comportamento esperado para books/websites: a mesma nota reutiliza o número dentro da página atual, mas pode receber uma nova numeração quando reaparece em outra página `.qmd`.
+- **PDF:** o escopo é o documento monolítico renderizado.
+- **DOCX:** o padrão é cada seção H1, acompanhando a numeração nativa do Word/Pandoc; pode ser alterado para `document`.
 
 ## Regra de igualdade
 
-A versão 0.2.1 usa correspondência **exata do AST da nota**, com uma única normalização deliberada: `SoftBreak` é tratado como espaço. Assim, quebrar a mesma nota em linhas diferentes no arquivo-fonte não muda sua identidade.
+A versão 0.2.2 usa correspondência **exata do AST da nota**, com uma única normalização deliberada: `SoftBreak` é tratado como espaço. Assim, quebrar a mesma nota em linhas diferentes no arquivo-fonte não muda sua identidade.
 
 Formatação, links, citações e múltiplos parágrafos continuam fazendo parte da identidade. Isso evita heurísticas bibliográficas ou comparações aproximadas.
 
@@ -117,7 +129,8 @@ Os testes não usam Python. Eles verificam, entre outras coisas:
 - 9 recorrências PDF geradas como hyperlinks para 7 notas canônicas;
 - ausência de `\footnotemark[n]` sem link nas recorrências do PDF;
 - 9 notas reais + 9 hyperlinks internos no DOCX;
-- correspondência explícita entre bookmark e número mostrado em cada recorrência DOCX;
+- numeração DOCX local por seção (`1`, `2`, ...), sem reaproveitar números globais incorretos;
+- uma mesma nota em duas H1 diferentes gera duas notas nativas locais;
 - ausência de `NOTEREF` e de arquivos Python.
 
 Execute:
