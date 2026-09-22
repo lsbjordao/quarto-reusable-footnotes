@@ -13,7 +13,9 @@ filters:
 reusable-footnotes:
   enabled: true
   backlinks: true
-  docx-scope: section
+  scope: page
+  numbering: page
+  docx-scope: pagebreak
 
 format:
   html:
@@ -26,3 +28,4 @@ format:
     monofont: "DejaVu Sans Mono"
   docx:
     toc: false
+    reference-doc: _extensions/reusable-footnotes/reference-page.docx
