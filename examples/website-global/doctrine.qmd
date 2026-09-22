@@ -1,0 +1,17 @@
+---
+title: "Doctrine — global numbering"
+---
+
+# The second website page
+
+The footnote scope is new because this is a different rendered HTML page, but numbering continues from the previous page.
+
+José Afonso da Silva appears again as a new page-local footnote, now numbered **3**.^[See [@silva2026]{.bibentry}]
+
+A second occurrence on this page reuses footnote **3**.^[See [@silva2026]{.bibentry}]
+
+A historical source receives footnote **4**.^[See [@bloch1953]{.bibentry}]
+
+The historical source is repeated locally and therefore reuses footnote **4**.^[See [@bloch1953]{.bibentry}]
+
+Continue to the [Constitution](constitution.qmd) page, which will begin at **5**.
