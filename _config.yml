@@ -1,6 +1,0 @@
-include:
-  - _output
-  - examples/website/_site
-  - examples/website-global/_site
-  - examples/book/_book
-  - examples/book-global/_book
