@@ -1,26 +1,30 @@
 -- reusable-footnotes.lua
--- Quarto/Pandoc filter: repeated footnotes with the same AST content share a
--- single real note within the current rendered document/page.
+-- Reuse identical footnotes within a page while allowing the same note to
+-- appear again on later pages. PDF/LaTeX uses fixfoot for true page-aware
+-- behavior; HTML uses the current rendered HTML file as the page scope; DOCX
+-- supports document/section/explicit-pagebreak scopes because physical Word
+-- pagination happens after Pandoc's AST phase.
+
+local utils = pandoc.utils
 
 local function note_key(note)
-  -- Treat editorial line wrapping as ordinary whitespace. This means the same
-  -- note still matches if one occurrence was wrapped at a different source line.
   local normalized = pandoc.Pandoc(note.content):walk({
-    SoftBreak = function()
-      return pandoc.Space()
+    SoftBreak = function() return pandoc.Space() end,
+    Cite = function(cite)
+      for _, citation in ipairs(cite.citations) do
+        citation.note_num = 0
+        citation.hash = 0
+      end
+      return cite
     end
   })
-
-  -- Native AST serialization preserves semantic differences (formatting, links,
-  -- citations, multiple paragraphs) while ignoring the original footnote label,
-  -- which Pandoc has already resolved before filters run.
   return pandoc.write(normalized, "native")
 end
 
 local function meta_bool(value, default)
   if value == nil then return default end
   if type(value) == "boolean" then return value end
-  local s = pandoc.utils.stringify(value):lower()
+  local s = utils.stringify(value):lower()
   if s == "true" or s == "yes" or s == "1" then return true end
   if s == "false" or s == "no" or s == "0" then return false end
   return default
@@ -28,7 +32,7 @@ end
 
 local function meta_string(value, default)
   if value == nil then return default end
-  local s = pandoc.utils.stringify(value):lower()
+  local s = utils.stringify(value):lower()
   if s == "" then return default end
   return s
 end
@@ -37,289 +41,363 @@ local function config_from(meta)
   local cfg = {
     enabled = true,
     backlinks = true,
-    docx_scope = "section",
+    scope = "page",
+    numbering = "continuous",
+    docx_scope = "pagebreak",
   }
 
   local raw = meta["reusable-footnotes"]
   if raw == nil then return cfg end
 
-  if pandoc.utils.type(raw) == "MetaMap" then
+  if utils.type(raw) == "MetaMap" or utils.type(raw) == "table" then
     cfg.enabled = meta_bool(raw.enabled, true)
     cfg.backlinks = meta_bool(raw.backlinks, true)
-    cfg.docx_scope = meta_string(raw["docx-scope"], "section")
-    if cfg.docx_scope ~= "section" and cfg.docx_scope ~= "document" then
-      cfg.docx_scope = "section"
-    end
+    cfg.scope = meta_string(raw.scope, "page")
+    cfg.numbering = meta_string(raw.numbering, "continuous")
+    cfg.docx_scope = meta_string(raw["docx-scope"], "pagebreak")
   else
     cfg.enabled = meta_bool(raw, true)
+  end
+
+  if cfg.scope ~= "page" and cfg.scope ~= "document" then
+    cfg.scope = "page"
+  end
+  if cfg.numbering ~= "continuous" and cfg.numbering ~= "page" then
+    cfg.numbering = "continuous"
+  end
+  if cfg.docx_scope ~= "pagebreak" and cfg.docx_scope ~= "section" and cfg.docx_scope ~= "document" then
+    cfg.docx_scope = "pagebreak"
   end
   return cfg
 end
 
 local function append_html_backlinks(note, number, total_occurrences)
   if total_occurrences <= 1 then return note end
-
-  local pieces = { '<span class="reusable-footnote-backlinks" aria-label="Retornos adicionais">' }
+  local pieces = { '<span class="reusable-footnote-backlinks" aria-label="Additional returns">' }
   for occurrence = 2, total_occurrences do
-    table.insert(
-      pieces,
-      string.format(
-        '<a href="#fnref%d-r%d" class="reusable-footnote-back" role="doc-backlink" aria-label="Voltar à ocorrência %d">↩︎</a>',
-        number,
-        occurrence,
-        occurrence
-      )
+    pieces[#pieces + 1] = string.format(
+      '<a href="#fnref%d-r%d" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence %d">↩︎</a>',
+      number, occurrence, occurrence
     )
-    table.insert(pieces, ' ')
+    pieces[#pieces + 1] = ' '
   end
-  table.insert(pieces, '</span>')
-
+  pieces[#pieces + 1] = '</span>'
   local raw = pandoc.RawInline('html', table.concat(pieces))
   local blocks = note.content
   local last = blocks[#blocks]
-
   if last and (last.t == 'Para' or last.t == 'Plain') then
-    table.insert(last.content, pandoc.Space())
-    table.insert(last.content, raw)
+    last.content:insert(pandoc.Space())
+    last.content:insert(raw)
   else
-    table.insert(blocks, pandoc.Plain({ raw }))
+    blocks:insert(pandoc.Plain({raw}))
   end
-
   note.content = blocks
   return note
 end
 
+local function include_html_assets()
+  if quarto and quarto.doc and quarto.doc.include_file then
+    quarto.doc.include_file('in-header', 'reusable-footnotes.html')
+  end
+end
+
+local function add_header_latex(meta, text)
+  if quarto and quarto.doc and quarto.doc.include_text then
+    quarto.doc.include_text('in-header', text)
+    return
+  end
+  local raw = pandoc.RawBlock('latex', text)
+  local existing = meta['header-includes']
+  if existing == nil then
+    meta['header-includes'] = pandoc.MetaBlocks({raw})
+    return
+  end
+  local kind = utils.type(existing)
+  if kind == 'Blocks' then
+    existing:insert(raw)
+  elseif kind == 'List' or kind == 'MetaList' then
+    existing:insert(pandoc.MetaBlocks({raw}))
+  else
+    meta['header-includes'] = pandoc.MetaList({existing, pandoc.MetaBlocks({raw})})
+  end
+end
+
+local function collect_citation_ids(blocks, ids, seen)
+  pandoc.Pandoc(blocks):walk({
+    Cite = function(cite)
+      for _, citation in ipairs(cite.citations) do
+        if not seen[citation.id] then
+          seen[citation.id] = true
+          ids:insert(citation.id)
+        end
+      end
+      return nil
+    end
+  })
+end
+
+local function append_nocite(meta, ids)
+  if #ids == 0 then return end
+  local citations = pandoc.List()
+  for _, id in ipairs(ids) do
+    citations:insert(pandoc.Citation(id, 'NormalCitation'))
+  end
+  local cite = pandoc.Cite({}, citations)
+  if meta.nocite == nil then
+    meta.nocite = pandoc.MetaInlines({cite})
+    return
+  end
+  local kind = utils.type(meta.nocite)
+  if kind == 'Inlines' then
+    meta.nocite:insert(pandoc.Space())
+    meta.nocite:insert(cite)
+  elseif kind == 'Blocks' then
+    meta.nocite:insert(pandoc.Plain({cite}))
+  else
+    meta.nocite = pandoc.MetaList({meta.nocite, pandoc.MetaInlines({cite})})
+  end
+end
+
+local function note_blocks_for_latex(note, meta)
+  local mini = pandoc.Pandoc(note.content, meta):clone()
+  mini.meta['suppress-bibliography'] = pandoc.MetaBool(true)
+  local ok, processed = pcall(utils.citeproc, mini)
+  if ok then return processed.blocks end
+  return note.content
+end
+
+local function alpha_id(n)
+  local chars = {}
+  repeat
+    local r = (n - 1) % 26
+    table.insert(chars, 1, string.char(97 + r))
+    n = math.floor((n - 1) / 26)
+  until n == 0
+  return table.concat(chars)
+end
+
+local function process_latex_page_scope(doc, cfg)
+  local ids_by_key = {}
+  local note_by_key = {}
+  local order = pandoc.List()
+  local cited_ids = pandoc.List()
+  local seen_cites = {}
+
+  doc:walk({
+    Note = function(note)
+      local key = note_key(note)
+      if ids_by_key[key] == nil then
+        local id = #order + 1
+        ids_by_key[key] = id
+        note_by_key[key] = note
+        order:insert(key)
+      end
+      collect_citation_ids(note.content, cited_ids, seen_cites)
+      return nil
+    end
+  })
+
+  if #order == 0 then return doc end
+
+  local preamble = { '\\usepackage{fixfoot}' }
+  if cfg.numbering == 'page' then
+    preamble[#preamble + 1] = '\\usepackage{perpage}'
+    preamble[#preamble + 1] = '\\MakePerPage{footnote}'
+  end
+
+  for _, key in ipairs(order) do
+    local id = ids_by_key[key]
+    local tag = alpha_id(id)
+    local blocks = note_blocks_for_latex(note_by_key[key], doc.meta)
+    local body = pandoc.write(pandoc.Pandoc(blocks, doc.meta), 'latex')
+    body = body:gsub('%s+$', '')
+    preamble[#preamble + 1] = string.format('\\long\\def\\rfnbody%s{%s}', tag, body)
+    preamble[#preamble + 1] = string.format(
+      '\\DeclareFixedFootnote{\\rfnnote%s}{\\protect\\rfnbody%s}', tag, tag
+    )
+  end
+
+  add_header_latex(doc.meta, table.concat(preamble, '\n'))
+  append_nocite(doc.meta, cited_ids)
+
+  return doc:walk({
+    Note = function(note)
+      local id = ids_by_key[note_key(note)]
+      return pandoc.RawInline('latex', string.format('\\rfnnote%s', alpha_id(id)))
+    end
+  })
+end
+
 local function add_latex_note_label(note, label)
-  -- A label inside the canonical footnote resolves to that footnote number and,
-  -- with hyperref, also provides the destination for repeated clickable marks.
   local blocks = note.content
   local first = blocks[1]
   local raw = pandoc.RawInline('latex', string.format('\\label{%s}', label))
-
   if first and (first.t == 'Para' or first.t == 'Plain') then
     table.insert(first.content, 1, raw)
   else
-    table.insert(blocks, 1, pandoc.Plain({ raw }))
+    table.insert(blocks, 1, pandoc.Plain({raw}))
   end
-
   note.content = blocks
   return note
 end
 
 local function latex_reuse_link(label)
-  -- \ref* supplies the number without creating a nested hyperlink; the outer
-  -- \hyperref makes the repeated superscript jump to the canonical footnote.
-  return pandoc.RawInline(
-    'latex',
-    string.format(
-      '\\hyperref[%s]{\\textsuperscript{\\ref*{%s}}}',
-      label,
-      label
-    )
-  )
+  return pandoc.RawInline('latex', string.format(
+    '\\hyperref[%s]{\\textsuperscript{\\ref*{%s}}}', label, label
+  ))
+end
+
+local function process_latex_document_scope(doc)
+  local counts = {}
+  doc:walk({Note=function(note)
+    local key=note_key(note); counts[key]=(counts[key] or 0)+1
+  end})
+  local numbers, occ, labels = {}, {}, {}
+  local next_number = 0
+  return doc:walk({Note=function(note)
+    local key=note_key(note)
+    occ[key]=(occ[key] or 0)+1
+    if numbers[key] == nil then
+      next_number=next_number+1
+      numbers[key]=next_number
+      if counts[key] > 1 then
+        local label=string.format('rfn-note-%06d', next_number)
+        labels[key]=label
+        note=add_latex_note_label(note,label)
+      end
+      return note
+    end
+    return latex_reuse_link(labels[key])
+  end})
+end
+
+local function process_html(doc, cfg)
+  local counts = {}
+  doc:walk({Note=function(note)
+    local key=note_key(note); counts[key]=(counts[key] or 0)+1
+  end})
+  local numbers, occ = {}, {}
+  local next_number = 0
+  local transformed = doc:walk({Note=function(note)
+    local key=note_key(note)
+    occ[key]=(occ[key] or 0)+1
+    if numbers[key] == nil then
+      next_number=next_number+1
+      numbers[key]=next_number
+      if cfg.backlinks then note=append_html_backlinks(note,next_number,counts[key]) end
+      return note
+    end
+    local number=numbers[key]
+    return pandoc.RawInline('html', string.format(
+      '<a href="#fn%d" class="footnote-ref reusable-footnote-ref" id="fnref%d-r%d" role="doc-noteref"><sup>%d</sup></a>',
+      number, number, occ[key], number
+    ))
+  end})
+  include_html_assets()
+  return transformed
 end
 
 local function add_docx_note_anchor(note, bookmark_id, bookmark_name)
-  -- Put the bookmark inside the actual footnote body. Repeated markers can then
-  -- link directly to the canonical note without relying on Word field updates.
-  local start_xml = string.format(
-    '<w:bookmarkStart w:id="%d" w:name="%s"/>',
-    bookmark_id,
-    bookmark_name
-  )
+  local start_xml = string.format('<w:bookmarkStart w:id="%d" w:name="%s"/>', bookmark_id, bookmark_name)
   local end_xml = string.format('<w:bookmarkEnd w:id="%d"/>', bookmark_id)
   local blocks = note.content
   local first = blocks[1]
-
   if first and (first.t == 'Para' or first.t == 'Plain') then
     table.insert(first.content, 1, pandoc.RawInline('openxml', end_xml))
     table.insert(first.content, 1, pandoc.RawInline('openxml', start_xml))
   else
-    table.insert(blocks, 1, pandoc.Plain({
-      pandoc.RawInline('openxml', start_xml),
-      pandoc.RawInline('openxml', end_xml),
-    }))
+    table.insert(blocks, 1, pandoc.Plain({pandoc.RawInline('openxml',start_xml),pandoc.RawInline('openxml',end_xml)}))
   end
-
-  note.content = blocks
+  note.content=blocks
   return note
 end
 
 local function docx_reuse_link(bookmark_name, number)
-  -- Use a plain internal hyperlink with the section-local canonical number.
-  -- This avoids stale/cached fields while matching Word's native numbering.
-  local xml = string.format(
-    '<w:hyperlink w:anchor="%s" w:history="1">' ..
-      '<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr>' ..
-      '<w:t>%d</w:t></w:r>' ..
-    '</w:hyperlink>',
-    bookmark_name,
-    number
-  )
-  return pandoc.RawInline('openxml', xml)
+  return pandoc.RawInline('openxml', string.format(
+    '<w:hyperlink w:anchor="%s" w:history="1"><w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr><w:t>%d</w:t></w:r></w:hyperlink>',
+    bookmark_name, number
+  ))
 end
 
-local function include_html_assets()
-  if not quarto or not quarto.doc or not quarto.doc.include_file then return end
-  quarto.doc.include_file('in-header', 'reusable-footnotes.html')
+local function is_docx_pagebreak(block)
+  if block.t ~= 'RawBlock' then return false end
+  if block.format == 'openxml' and block.text:match('w:br[^>]-w:type=["\']page["\']') then return true end
+  if (block.format == 'tex' or block.format == 'latex') and block.text:match('^%s*\\(newpage|pagebreak)') then return true end
+  return false
+end
+
+local function docx_scope_id(cfg, state)
+  if cfg.docx_scope == 'document' then return 0 end
+  if cfg.docx_scope == 'section' then return state.section end
+  return state.pagebreak
+end
+
+local function process_docx(doc, cfg)
+  local counts = {}
+  local state = {section=0,pagebreak=0}
+  for _, block in ipairs(doc.blocks) do
+    if cfg.docx_scope == 'section' and block.t=='Header' and block.level==1 then state.section=state.section+1 end
+    if cfg.docx_scope == 'pagebreak' and is_docx_pagebreak(block) then state.pagebreak=state.pagebreak+1 end
+    local sid=docx_scope_id(cfg,state)
+    pandoc.walk_block(block,{Note=function(note)
+      local key=tostring(sid)..'\31'..note_key(note)
+      counts[key]=(counts[key] or 0)+1
+      return note
+    end})
+  end
+
+  local canonical_number, bookmarks, next_number_by_scope = {}, {}, {}
+  local next_number_global = 0
+  local next_bookmark_id=2000000000
+  state={section=0,pagebreak=0}
+  for i,block in ipairs(doc.blocks) do
+    if cfg.docx_scope == 'section' and block.t=='Header' and block.level==1 then state.section=state.section+1 end
+    if cfg.docx_scope == 'pagebreak' and is_docx_pagebreak(block) then state.pagebreak=state.pagebreak+1 end
+    local sid=docx_scope_id(cfg,state)
+    doc.blocks[i]=pandoc.walk_block(block,{Note=function(note)
+      local key=tostring(sid)..'\31'..note_key(note)
+      if canonical_number[key] == nil then
+        local number
+        if cfg.numbering == 'page' and cfg.docx_scope == 'pagebreak' then
+          number=(next_number_by_scope[sid] or 0)+1
+          next_number_by_scope[sid]=number
+        elseif cfg.numbering == 'page' and cfg.docx_scope == 'section' then
+          number=(next_number_by_scope[sid] or 0)+1
+          next_number_by_scope[sid]=number
+        else
+          next_number_global=next_number_global+1
+          number=next_number_global
+        end
+        canonical_number[key]=number
+        if (counts[key] or 0)>1 then
+          next_bookmark_id=next_bookmark_id+1
+          local bookmark={id=next_bookmark_id,name=string.format('rfn_note_s%06d_n%06d',sid,number)}
+          bookmarks[key]=bookmark
+          note=add_docx_note_anchor(note,bookmark.id,bookmark.name)
+        end
+        return note
+      end
+      local bookmark=bookmarks[key]
+      if bookmark then return docx_reuse_link(bookmark.name,canonical_number[key]) end
+      return note
+    end})
+  end
+  return doc
 end
 
 local function is_docx_format()
   return FORMAT:match('docx') or FORMAT:match('openxml')
 end
 
-local function docx_section_key(section_id, note)
-  return tostring(section_id) .. "\31" .. note_key(note)
-end
-
--- Pandoc/Quarto DOCX restarts native footnote numbering at each top-level
--- section in the default writer. Process top-level blocks in source order so
--- reused markers carry the same section-local number as the canonical note.
--- A document-wide mode remains available for custom reference DOCX files that
--- use continuous numbering.
-local function process_docx(doc, cfg)
-  local counts = {}
-  local section_id = 0
-
-  for _, block in ipairs(doc.blocks) do
-    if cfg.docx_scope == "section" and block.t == "Header" and block.level == 1 then
-      section_id = section_id + 1
-    end
-
-    local current_section = (cfg.docx_scope == "section") and section_id or 0
-    pandoc.walk_block(block, {
-      Note = function(note)
-        local key = docx_section_key(current_section, note)
-        counts[key] = (counts[key] or 0) + 1
-        return note
-      end
-    })
-  end
-
-  local canonical_number = {}
-  local occurrence = {}
-  local bookmarks = {}
-  local next_number_by_section = {}
-  local next_bookmark_id = 2000000000
-  section_id = 0
-
-  for i, block in ipairs(doc.blocks) do
-    if cfg.docx_scope == "section" and block.t == "Header" and block.level == 1 then
-      section_id = section_id + 1
-    end
-
-    local current_section = (cfg.docx_scope == "section") and section_id or 0
-    doc.blocks[i] = pandoc.walk_block(block, {
-      Note = function(note)
-        local key = docx_section_key(current_section, note)
-        occurrence[key] = (occurrence[key] or 0) + 1
-
-        if canonical_number[key] == nil then
-          local next_number = (next_number_by_section[current_section] or 0) + 1
-          next_number_by_section[current_section] = next_number
-          canonical_number[key] = next_number
-
-          if (counts[key] or 0) > 1 then
-            next_bookmark_id = next_bookmark_id + 1
-            local bookmark = {
-              id = next_bookmark_id,
-              name = string.format(
-                'rfn_note_s%06d_n%06d',
-                current_section,
-                next_number
-              ),
-            }
-            bookmarks[key] = bookmark
-            note = add_docx_note_anchor(note, bookmark.id, bookmark.name)
-          end
-
-          return note
-        end
-
-        local bookmark = bookmarks[key]
-        if bookmark then
-          return docx_reuse_link(bookmark.name, canonical_number[key])
-        end
-
-        return note
-      end
-    })
-  end
-
-  return doc
-end
-
 function Pandoc(doc)
-  local cfg = config_from(doc.meta)
+  local cfg=config_from(doc.meta)
   if not cfg.enabled then return doc end
 
-  if is_docx_format() then
-    return process_docx(doc, cfg)
+  if is_docx_format() then return process_docx(doc,cfg) end
+  if FORMAT:match('latex') then
+    if cfg.scope == 'page' then return process_latex_page_scope(doc,cfg) end
+    return process_latex_document_scope(doc)
   end
-
-  local counts = {}
-  doc:walk({
-    Note = function(note)
-      local key = note_key(note)
-      counts[key] = (counts[key] or 0) + 1
-    end
-  })
-
-  local canonical_number = {}
-  local occurrence = {}
-  local latex_labels = {}
-  local next_number = 0
-
-  local transformed = doc:walk({
-    Note = function(note)
-      local key = note_key(note)
-      occurrence[key] = (occurrence[key] or 0) + 1
-      local current_occurrence = occurrence[key]
-
-      if canonical_number[key] == nil then
-        next_number = next_number + 1
-        canonical_number[key] = next_number
-
-        if FORMAT:match('latex') and counts[key] > 1 then
-          local label = string.format('rfn-note-%06d', next_number)
-          latex_labels[key] = label
-          note = add_latex_note_label(note, label)
-        elseif FORMAT:match('html') and cfg.backlinks then
-          note = append_html_backlinks(note, next_number, counts[key])
-        end
-
-        return note
-      end
-
-      local number = canonical_number[key]
-
-      if FORMAT:match('html') then
-        return pandoc.RawInline(
-          'html',
-          string.format(
-            '<a href="#fn%d" class="footnote-ref reusable-footnote-ref" id="fnref%d-r%d" role="doc-noteref"><sup>%d</sup></a>',
-            number,
-            number,
-            current_occurrence,
-            number
-          )
-        )
-      elseif FORMAT:match('latex') then
-        local label = latex_labels[key]
-        if label then
-          return latex_reuse_link(label)
-        end
-        return pandoc.RawInline('latex', string.format('\\footnotemark[%d]', number))
-      else
-        -- Conservative fallback for formats without a dedicated renderer.
-        return note
-      end
-    end
-  })
-
-  if FORMAT:match('html') then
-    include_html_assets()
-  end
-
-  return transformed
+  if FORMAT:match('html') then return process_html(doc,cfg) end
+  return doc
 end
