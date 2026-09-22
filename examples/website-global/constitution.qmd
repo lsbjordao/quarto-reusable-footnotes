@@ -1,0 +1,13 @@
+---
+title: "Constitution — global numbering"
+---
+
+# The third website page
+
+The Constitution appears again on a new HTML page. It is a new page-local footnote, but global numbering continues at **5**.^[See [@brasil1988]{.bibentry}]
+
+A second occurrence on this page reuses footnote **5**.^[See [@brasil1988]{.bibentry}]
+
+José Afonso da Silva then receives footnote **6** on this page.^[See [@silva2026]{.bibentry}]
+
+This demonstrates the global-numbering variant: **reuse remains local to each HTML page, while the visible footnote sequence continues across the website**.
