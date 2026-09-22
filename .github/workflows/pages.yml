@@ -1,0 +1,92 @@
+name: Deploy Quarto site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Clean generated output
+        run: |
+          rm -rf _output
+          rm -rf examples/website/_site
+          rm -rf examples/website-global/_site
+          rm -rf examples/book/_book
+          rm -rf examples/book-global/_book
+
+      - name: Render main HTML page
+        run: quarto render --to html
+
+      - name: Render HTML examples
+        run: |
+          quarto render examples/website --to html
+          quarto render examples/website-global --to html
+          quarto render examples/book --to html
+          quarto render examples/book-global --to html
+
+      - name: Assemble GitHub Pages site
+        run: |
+          rm -rf site
+          mkdir -p site/examples/website
+          mkdir -p site/examples/website-global
+          mkdir -p site/examples/book
+          mkdir -p site/examples/book-global
+
+          cp -R _output/. site/
+          cp -R examples/website/_site/. site/examples/website/
+          cp -R examples/website-global/_site/. site/examples/website-global/
+          cp -R examples/book/_book/. site/examples/book/
+          cp -R examples/book-global/_book/. site/examples/book-global/
+
+          if [ -d assets ]; then
+            cp -R assets site/assets
+          fi
+
+          touch site/.nojekyll
+
+          test -f site/index.html
+          test -f site/examples/website/index.html
+          test -f site/examples/website-global/index.html
+          test -f site/examples/book/index.html
+          test -f site/examples/book-global/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
