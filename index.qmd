@@ -3,6 +3,7 @@ title: "reusable-footnotes"
 subtitle: "Reusable bibliographic footnotes for Quarto"
 author: "Lucas Sá Barreto Jordão"
 date: "2026-09-22"
+bibliography: references.bib
 ---
 
 # Why this pattern matters
