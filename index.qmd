@@ -128,6 +128,67 @@ A second reference to the historical source on the same page reuses its page-loc
 
 The result is a document in which each printed page carries the references needed to understand that page, while identical notes are not redundantly printed twice on the same page.
 
+# Configuration
+
+The example in this repository uses page-local reuse and restarts footnote numbering on every page. Its effective Quarto configuration is:
+
+```yaml
+bibliography: references.bib
+
+filters:
+  - bibentry
+  - reusable-footnotes
+
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+  scope: page
+  numbering: page
+  docx-scope: pagebreak
+
+format:
+  html:
+    toc: true
+  pdf:
+    toc: true
+    pdf-engine: lualatex
+  docx:
+    toc: false
+    reference-doc: _extensions/reusable-footnotes/reference-page.docx
+```
+
+The options mean:
+
+- `scope: page`: identical notes are reused only within the current page scope; they may appear again on later pages.
+- `numbering: page`: footnote numbering restarts at `1` on every printed page.
+- `numbering: continuous`: footnote numbering continues across pages while reuse still remains page-local.
+- `docx-scope: pagebreak`: explicit `{{< pagebreak >}}` boundaries define deterministic page scopes before Word performs final layout.
+- `backlinks: true`: HTML adds discreet return links for repeated calls to the same local footnote.
+
+For **continuous numbering** across printed pages, keep page-local reuse and change only:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: continuous
+  docx-scope: pagebreak
+```
+
+For **numbering restarted on every page**, use:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: page
+  docx-scope: pagebreak
+
+format:
+  docx:
+    reference-doc: _extensions/reusable-footnotes/reference-page.docx
+```
+
+The supplied DOCX reference file configures Word's native footnote counter with `w:numRestart="eachPage"`. It is only needed when page-local numbering is desired; for continuous numbering, omit it or use your own reference DOCX.
+
 # Numbering policy
 
 Page-local reuse and footnote numbering are separate choices.
