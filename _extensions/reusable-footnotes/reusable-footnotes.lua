@@ -77,36 +77,73 @@ local function append_html_backlinks(note, number, total_occurrences)
   return note
 end
 
-local function docx_bookmark_start(bookmark_id, bookmark_name)
+local function add_latex_note_label(note, label)
+  -- A label inside the canonical footnote resolves to that footnote number and,
+  -- with hyperref, also provides the destination for repeated clickable marks.
+  local blocks = note.content
+  local first = blocks[1]
+  local raw = pandoc.RawInline('latex', string.format('\\label{%s}', label))
+
+  if first and (first.t == 'Para' or first.t == 'Plain') then
+    table.insert(first.content, 1, raw)
+  else
+    table.insert(blocks, 1, pandoc.Plain({ raw }))
+  end
+
+  note.content = blocks
+  return note
+end
+
+local function latex_reuse_link(label)
+  -- \ref* supplies the number without creating a nested hyperlink; the outer
+  -- \hyperref makes the repeated superscript jump to the canonical footnote.
   return pandoc.RawInline(
-    'openxml',
+    'latex',
     string.format(
-      '<w:bookmarkStart w:id="%d" w:name="%s"/>',
-      bookmark_id,
-      bookmark_name
+      '\\hyperref[%s]{\\textsuperscript{\\ref*{%s}}}',
+      label,
+      label
     )
   )
 end
 
-local function docx_bookmark_end(bookmark_id)
-  return pandoc.RawInline(
-    'openxml',
-    string.format('<w:bookmarkEnd w:id="%d"/>', bookmark_id)
+local function add_docx_note_anchor(note, bookmark_id, bookmark_name)
+  -- Put the bookmark inside the actual footnote body. Repeated markers can then
+  -- link directly to the canonical note without relying on Word field updates.
+  local start_xml = string.format(
+    '<w:bookmarkStart w:id="%d" w:name="%s"/>',
+    bookmark_id,
+    bookmark_name
   )
+  local end_xml = string.format('<w:bookmarkEnd w:id="%d"/>', bookmark_id)
+  local blocks = note.content
+  local first = blocks[1]
+
+  if first and (first.t == 'Para' or first.t == 'Plain') then
+    table.insert(first.content, 1, pandoc.RawInline('openxml', end_xml))
+    table.insert(first.content, 1, pandoc.RawInline('openxml', start_xml))
+  else
+    table.insert(blocks, 1, pandoc.Plain({
+      pandoc.RawInline('openxml', start_xml),
+      pandoc.RawInline('openxml', end_xml),
+    }))
+  end
+
+  note.content = blocks
+  return note
 end
 
-local function docx_noteref(bookmark_name, cached_number)
-  -- NOTEREF is Word's native cross-reference field for multiple references to
-  -- one footnote/endnote. \f applies the Footnote Reference character style;
-  -- \h makes the field a hyperlink to the bookmarked original reference.
-  -- w:dirty asks Word to refresh the cached field result when appropriate.
+local function docx_reuse_link(bookmark_name, number)
+  -- Use a plain internal hyperlink with a literal canonical number instead of
+  -- NOTEREF. This avoids stale/cached field results displaying another note's
+  -- number before Word refreshes its fields.
   local xml = string.format(
-    '<w:fldSimple w:instr=" NOTEREF %s \\f \\h " w:dirty="true">' ..
+    '<w:hyperlink w:anchor="%s" w:history="1">' ..
       '<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr>' ..
       '<w:t>%d</w:t></w:r>' ..
-    '</w:fldSimple>',
+    '</w:hyperlink>',
     bookmark_name,
-    cached_number
+    number
   )
   return pandoc.RawInline('openxml', xml)
 end
@@ -130,6 +167,7 @@ function Pandoc(doc)
 
   local canonical_number = {}
   local occurrence = {}
+  local latex_labels = {}
   local docx_bookmarks = {}
   local next_number = 0
   local next_bookmark_id = 2000000000
@@ -144,22 +182,20 @@ function Pandoc(doc)
         next_number = next_number + 1
         canonical_number[key] = next_number
 
-        if FORMAT:match('html') and cfg.backlinks then
+        if FORMAT:match('latex') and counts[key] > 1 then
+          local label = string.format('rfn-note-%06d', next_number)
+          latex_labels[key] = label
+          note = add_latex_note_label(note, label)
+        elseif FORMAT:match('html') and cfg.backlinks then
           note = append_html_backlinks(note, next_number, counts[key])
         elseif (FORMAT:match('docx') or FORMAT:match('openxml')) and counts[key] > 1 then
-          -- Word's NOTEREF field requires a bookmark around the original
-          -- footnote reference mark in the document body (not inside the note).
           next_bookmark_id = next_bookmark_id + 1
           local bookmark = {
             id = next_bookmark_id,
-            name = string.format('rfn_ref_%06d', next_number),
+            name = string.format('rfn_note_%06d', next_number),
           }
           docx_bookmarks[key] = bookmark
-          return {
-            docx_bookmark_start(bookmark.id, bookmark.name),
-            note,
-            docx_bookmark_end(bookmark.id),
-          }
+          note = add_docx_note_anchor(note, bookmark.id, bookmark.name)
         end
 
         return note
@@ -179,12 +215,15 @@ function Pandoc(doc)
           )
         )
       elseif FORMAT:match('latex') then
-        -- Reuse the already-created marker without creating another footnote.
+        local label = latex_labels[key]
+        if label then
+          return latex_reuse_link(label)
+        end
         return pandoc.RawInline('latex', string.format('\\footnotemark[%d]', number))
       elseif FORMAT:match('docx') or FORMAT:match('openxml') then
         local bookmark = docx_bookmarks[key]
         if bookmark then
-          return docx_noteref(bookmark.name, number)
+          return docx_reuse_link(bookmark.name, number)
         end
         return note
       else
