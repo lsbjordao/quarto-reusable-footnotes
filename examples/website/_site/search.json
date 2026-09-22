@@ -1,0 +1,44 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Website example",
+    "section": "",
+    "text": "A Quarto website renders each .qmd file as its own HTML page. That makes the page boundary explicit: reusable footnotes are deduplicated within the current page, while the same bibliographic source may appear again in another page’s footnotes.\nThis page cites José Afonso da Silva once.1\nThe same source is cited again on this page, so the second call reuses the first local footnote.1\nThe Constitution is a different source and therefore receives its own footnote.2\nContinue to the Doctrine page to see José Afonso da Silva appear again as a new page-local footnote."
+  },
+  {
+    "objectID": "index.html#footnotes",
+    "href": "index.html#footnotes",
+    "title": "Website example",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm.↩︎"
+  },
+  {
+    "objectID": "constitution.html",
+    "href": "constitution.html",
+    "title": "Constitution",
+    "section": "",
+    "text": "The Constitution appears as a new footnote on this page even though it was already cited on the website home page.1\nA second citation on this same page reuses the local constitutional footnote.1\nJosé Afonso da Silva can also reappear here as a new local footnote for this page.2\nThis demonstrates the intended HTML website behavior: reuse within one rendered page, repetition across different rendered pages."
+  },
+  {
+    "objectID": "constitution.html#footnotes",
+    "href": "constitution.html#footnotes",
+    "title": "Constitution",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSee Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm. ↩︎ ↩︎\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm.↩︎"
+  },
+  {
+    "objectID": "doctrine.html",
+    "href": "doctrine.html",
+    "title": "Doctrine",
+    "section": "",
+    "text": "This is a different rendered website page, so the footnote scope starts again here.\nJosé Afonso da Silva is cited again and receives a new local footnote for this page.1\nA second occurrence on the same page reuses that new page-local footnote instead of duplicating the full bibliographic entry.1\nA historical source can use exactly the same mechanism.2\nThe historical source is repeated locally and therefore reuses its existing footnote on this page.2\nContinue to the Constitution page for another independent page scope."
+  },
+  {
+    "objectID": "doctrine.html#footnotes",
+    "href": "doctrine.html#footnotes",
+    "title": "Doctrine",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Bloch, Marc. 1953. The Historian’s Craft. Manchester: Manchester University Press. ↩︎ ↩︎"
+  }
+]

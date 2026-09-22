@@ -1,0 +1,62 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "reusable-footnotes — book global numbering",
+    "section": "",
+    "text": "1 Chapter 1 — global footnote numbering\nThis HTML book keeps reusable-footnote identity local to each chapter page while continuing the displayed footnote numbers across chapters.\nJosé Afonso da Silva is cited first.1\nThe same citation appears again in this chapter and reuses footnote 1.1\nThe Constitution receives footnote 2.2\nThe next chapter therefore begins at 3, even though its reusable-footnote scope is independent.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Opening chapter</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#footnotes",
+    "href": "index.html#footnotes",
+    "title": "reusable-footnotes — book global numbering",
+    "section": "",
+    "text": "See Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm.↩︎",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Opening chapter</span>"
+    ]
+  },
+  {
+    "objectID": "doctrine.html",
+    "href": "doctrine.html",
+    "title": "2  Doctrine",
+    "section": "",
+    "text": "3 Chapter 2 — numbering continues\nThis chapter is a new HTML page, so José Afonso da Silva receives a new page-local footnote. Because numbering is global, that footnote is 3.1\nA repeated occurrence in this chapter reuses footnote 3.1\nA historical source receives footnote 4.2\nRepeating it in the same chapter reuses footnote 4.2\nThe third chapter therefore begins at 5.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Doctrine</span>"
+    ]
+  },
+  {
+    "objectID": "doctrine.html#footnotes",
+    "href": "doctrine.html#footnotes",
+    "title": "2  Doctrine",
+    "section": "",
+    "text": "See Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Bloch, Marc. 1953. The Historian’s Craft. Manchester: Manchester University Press. ↩︎ ↩︎",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Doctrine</span>"
+    ]
+  },
+  {
+    "objectID": "constitution.html",
+    "href": "constitution.html",
+    "title": "3  Constitution",
+    "section": "",
+    "text": "4 Chapter 3 — global sequence, local reuse\nThe Constitution appears again in this chapter as a new page-local footnote numbered 5.1\nA repeated occurrence reuses footnote 5.1\nJosé Afonso da Silva then receives footnote 6 in this chapter.2\nThis demonstrates the book-wide numbering variant: each chapter page owns its footnotes, while the visible numbering continues across the book.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Constitution</span>"
+    ]
+  },
+  {
+    "objectID": "constitution.html#footnotes",
+    "href": "constitution.html#footnotes",
+    "title": "3  Constitution",
+    "section": "",
+    "text": "See Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm. ↩︎ ↩︎\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm.↩︎",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Constitution</span>"
+    ]
+  }
+]

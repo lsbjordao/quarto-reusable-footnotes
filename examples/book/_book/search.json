@@ -1,0 +1,62 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "reusable-footnotes — book example",
+    "section": "",
+    "text": "1 Introduction\nIn an HTML Quarto book, each chapter is rendered as its own page. reusable-footnotes therefore treats each chapter page as an independent footnote scope.\nJosé Afonso da Silva is cited here for the first time in this chapter.1\nA second occurrence in the same chapter reuses the same local footnote.1\nThe Constitution is a distinct source and receives another footnote.2\nThe next chapter cites José Afonso da Silva again, but because it is a different rendered HTML page, the footnote is created again there.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#footnotes",
+    "href": "index.html#footnotes",
+    "title": "reusable-footnotes — book example",
+    "section": "",
+    "text": "See Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm.↩︎",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
+    ]
+  },
+  {
+    "objectID": "doctrine.html",
+    "href": "doctrine.html",
+    "title": "2  Doctrine",
+    "section": "",
+    "text": "This chapter is a separate HTML page in the rendered book, so its footnote scope starts fresh.\nJosé Afonso da Silva appears again as a new chapter-local footnote.1\nA second citation in this chapter reuses that local footnote instead of duplicating the full reference.1\nMarc Bloch is introduced as another source.2\nThe same historical source is cited again and reuses the chapter-local note.2\nThis is the book analogue of page-local reuse: each chapter page carries its own footnotes, while duplicate calls inside the chapter are consolidated.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Doctrine</span>"
+    ]
+  },
+  {
+    "objectID": "doctrine.html#footnotes",
+    "href": "doctrine.html#footnotes",
+    "title": "2  Doctrine",
+    "section": "",
+    "text": "See Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Bloch, Marc. 1953. The Historian’s Craft. Manchester: Manchester University Press. ↩︎ ↩︎",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Doctrine</span>"
+    ]
+  },
+  {
+    "objectID": "constitution.html",
+    "href": "constitution.html",
+    "title": "3  Constitution",
+    "section": "",
+    "text": "The Constitution is cited again in this chapter as a fresh chapter-local footnote.1\nA second occurrence in this same chapter reuses the local constitutional note.1\nJosé Afonso da Silva may likewise reappear here as a new local footnote for this chapter.2\nThe HTML book therefore mirrors the intended page semantics naturally: new rendered chapter page, new footnote scope; repeated call within that page, reused footnote.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Constitution</span>"
+    ]
+  },
+  {
+    "objectID": "constitution.html#footnotes",
+    "href": "constitution.html#footnotes",
+    "title": "3  Constitution",
+    "section": "",
+    "text": "See Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm. ↩︎ ↩︎\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm.↩︎",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Constitution</span>"
+    ]
+  }
+]

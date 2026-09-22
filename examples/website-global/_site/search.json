@@ -1,0 +1,44 @@
+[
+  {
+    "objectID": "constitution.html",
+    "href": "constitution.html",
+    "title": "Constitution — global numbering",
+    "section": "",
+    "text": "The Constitution appears again on a new HTML page. It is a new page-local footnote, but global numbering continues at 5.1\nA second occurrence on this page reuses footnote 5.1\nJosé Afonso da Silva then receives footnote 6 on this page.2\nThis demonstrates the global-numbering variant: reuse remains local to each HTML page, while the visible footnote sequence continues across the website."
+  },
+  {
+    "objectID": "constitution.html#footnotes",
+    "href": "constitution.html#footnotes",
+    "title": "Constitution — global numbering",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSee Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm. ↩︎ ↩︎\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm.↩︎"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Website — global numbering",
+    "section": "",
+    "text": "This website keeps reusable-footnote identity local to each rendered HTML page, but the visible footnote numbers continue across the project.\nJosé Afonso da Silva is cited here for the first time.1\nThe same source is cited again on this page, so the second call reuses footnote 1 rather than creating another note.1\nThe Constitution is a different source and receives footnote 2.2\nContinue to the Doctrine page. Because this page contributed two canonical footnotes, the next page starts at 3."
+  },
+  {
+    "objectID": "index.html#footnotes",
+    "href": "index.html#footnotes",
+    "title": "Website — global numbering",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Brasil. 1988. “Constituição Da República Federativa Do Brasil de 1988.” Brasília, DF: Presidência da República. https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm.↩︎"
+  },
+  {
+    "objectID": "doctrine.html",
+    "href": "doctrine.html",
+    "title": "Doctrine — global numbering",
+    "section": "",
+    "text": "The footnote scope is new because this is a different rendered HTML page, but numbering continues from the previous page.\nJosé Afonso da Silva appears again as a new page-local footnote, now numbered 3.1\nA second occurrence on this page reuses footnote 3.1\nA historical source receives footnote 4.2\nThe historical source is repeated locally and therefore reuses footnote 4.2\nContinue to the Constitution page, which will begin at 5."
+  },
+  {
+    "objectID": "doctrine.html#footnotes",
+    "href": "doctrine.html#footnotes",
+    "title": "Doctrine — global numbering",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nSee Silva, José Afonso da. 2026. Curso de Direito Constitucional Positivo. 47th ed. São Paulo: JusPodivm. ↩︎ ↩︎\nSee Bloch, Marc. 1953. The Historian’s Craft. Manchester: Manchester University Press. ↩︎ ↩︎"
+  }
+]
