@@ -12,7 +12,7 @@ bibliography: references.bib
 
 The important distinction is between the **bibliographic source** and its **footnote occurrences**. BibTeX should define the source once; Quarto should decide how that source is rendered wherever it is used.
 
-For printable outputs, this has an important practical consequence. In **PDF** and **DOCX**, the reader can encounter the full source at the bottom of the same page as the proposition it supports. A reference that is cited again on another page can therefore appear again on that later page, while repeated uses on the *same* page can share one footnote.
+For printable outputs, this has an important practical consequence. In **PDF** and **DOCX**, the reader can encounter the full source at the bottom of the same page as the proposition it supports. A reference cited again on another page can therefore appear again on that later page, while repeated uses on the *same* page can share one footnote.
 
 The intended page-local behavior is:
 
@@ -28,7 +28,7 @@ page 2     A³ ... A³ ... B⁴       # continuous numbering
            ⁴ Full reference B
 ```
 
-or, when page-local numbering is selected:
+or, when numbering restarts on every page:
 
 ```text
 page 1     A¹ ... A¹ ... B²
@@ -118,11 +118,11 @@ This page ends by citing the Constitution once more, demonstrating reuse within 
 
 ## Demonstration page 3
 
-A third page repeats the same pattern to make the distinction explicit. José Afonso da Silva appears again as a footnote on this page.^[See [@silva2026]{.bibentry}]
+A third page repeats the same pattern. José Afonso da Silva appears again as a footnote on this page.^[See [@silva2026]{.bibentry}]
 
 The same source can be invoked again without duplicating the footnote text on this page.^[See [@silva2026]{.bibentry}]
 
-A historical source can participate in exactly the same mechanism, showing that the extension is not specific to legal bibliography.^[See [@bloch1953]{.bibentry}]
+A historical source can participate in exactly the same mechanism.^[See [@bloch1953]{.bibentry}]
 
 A second reference to the historical source on the same page reuses its page-local note.^[See [@bloch1953]{.bibentry}]
 
@@ -130,7 +130,7 @@ The result is a document in which each printed page carries the references neede
 
 # Configuration
 
-The example in this repository uses page-local reuse and restarts footnote numbering on every page. Its effective Quarto configuration is:
+The repository example uses page-local reuse and restarts footnote numbering on every page:
 
 ```yaml
 bibliography: references.bib
@@ -157,15 +157,15 @@ format:
     reference-doc: _extensions/reusable-footnotes/reference-page.docx
 ```
 
-The options mean:
+The main options are:
 
-- `scope: page`: identical notes are reused only within the current page scope; they may appear again on later pages.
-- `numbering: page`: footnote numbering restarts at `1` on every printed page.
-- `numbering: continuous`: footnote numbering continues across pages while reuse still remains page-local.
-- `docx-scope: pagebreak`: explicit `{{< pagebreak >}}` boundaries define deterministic page scopes before Word performs final layout.
+- `scope: page`: identical notes are reused only within the current page scope and may appear again later.
+- `numbering: page`: numbering restarts at `1` on every printed page.
+- `numbering: continuous`: numbering continues across pages while reuse remains page-local.
+- `docx-scope: pagebreak`: explicit `{{< pagebreak >}}` boundaries define deterministic DOCX page scopes before Word performs final layout.
 - `backlinks: true`: HTML adds discreet return links for repeated calls to the same local footnote.
 
-For **continuous numbering** across printed pages, keep page-local reuse and change only:
+For continuous numbering, change only:
 
 ```yaml
 reusable-footnotes:
@@ -174,52 +174,32 @@ reusable-footnotes:
   docx-scope: pagebreak
 ```
 
-For **numbering restarted on every page**, use:
+For DOCX page-local numbering, the supplied `reference-page.docx` configures Word's native footnote counter to restart on each page. For continuous DOCX numbering, omit that reference document or use a custom continuous-numbering reference DOCX.
 
-```yaml
-reusable-footnotes:
-  scope: page
-  numbering: page
-  docx-scope: pagebreak
+# HTML websites and books
 
-format:
-  docx:
-    reference-doc: _extensions/reusable-footnotes/reference-page.docx
+A standalone HTML document is one scrolling document, so there is no physical-page concept comparable to PDF or DOCX. The whole file is therefore one logical reusable-footnote scope.
+
+A Quarto **website** or **HTML book** is different: each `.qmd` page or chapter is rendered as its own HTML page. The filter state starts fresh for each rendered page. This naturally gives the behavior we want: a source may appear again in the footnotes of another page, while repeated calls within the same page share one local footnote.
+
+Two complete examples are included in this repository:
+
+- [Quarto website example](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website) — three independent website pages that repeat José Afonso da Silva and the Constitution across pages.
+- [Quarto book example](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book) — three HTML book chapters, each with its own footnote scope.
+
+Run them locally with:
+
+```bash
+quarto preview examples/website
 ```
 
-The supplied DOCX reference file configures Word's native footnote counter with `w:numRestart="eachPage"`. It is only needed when page-local numbering is desired; for continuous numbering, omit it or use your own reference DOCX.
+and:
 
-# Numbering policy
-
-Page-local reuse and footnote numbering are separate choices.
-
-For **continuous numbering** across printed pages:
-
-```yaml
-reusable-footnotes:
-  scope: page
-  numbering: continuous
+```bash
+quarto preview examples/book
 ```
 
-The result is conceptually `1, 2` on the first page, then `3, 4` on the next page, while repeated occurrences on each page reuse the local number.
-
-For **numbering restarted on every page**:
-
-```yaml
-reusable-footnotes:
-  scope: page
-  numbering: page
-```
-
-The result is `1, 2` on page 1 and again `1, 2` on page 2.
-
-For PDF/LaTeX, `reusable-footnotes` implements true physical-page awareness using LaTeX's page-tracking mechanism, so naturally flowing page breaks are handled after layout. For DOCX, physical pagination is determined later by Word or another word processor. Exact page-local reuse is therefore deterministic when the document uses explicit Quarto `{{< pagebreak >}}` boundaries; the supplied page-numbering reference document can also make Word restart footnote numbering on every physical page.
-
-# HTML, websites, and books
-
-A standalone HTML document is one scrolling document, so there is no physical-page concept comparable to PDF or DOCX. In that case, the rendered HTML file is treated as one logical page for reusable footnotes.
-
-A Quarto **website or HTML book is different**: each `.qmd` is rendered as its own HTML page. The filter state starts fresh for each rendered page, so every website/book page gets its own canonical footnotes naturally. A source cited on two different HTML pages can therefore appear in both pages' footnote areas, while repeated occurrences within one page share the local footnote.
+On each website page or book chapter, an identical reference is printed once in the local footnote area and reused by additional calls on that page. Navigating to the next page or chapter creates a new footnote scope, so the same bibliographic source can appear again there.
 
 # Why BibTeX remains the source of truth
 
@@ -263,7 +243,8 @@ The proposed upstream changes add recursive AST support, including `.bibentry` i
 | Format | Page-local behavior |
 |---|---|
 | HTML document | the whole HTML file is one logical page |
-| HTML website/book | each rendered `.qmd` page has its own footnote scope |
+| HTML website | each rendered `.qmd` page has its own footnote scope |
+| HTML book | each rendered chapter page has its own footnote scope |
 | PDF | true physical-page reuse; identical notes print once per page and may reappear on later pages |
 | DOCX | exact reuse within explicit pagebreak-delimited pages; Word can restart numbering on every physical page through the supplied reference document |
 
