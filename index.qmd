@@ -1,6 +1,6 @@
 ---
 title: "reusable-footnotes"
-subtitle: "Reusable bibliographic footnotes for Quarto"
+subtitle: "Page-local reusable bibliographic footnotes for Quarto"
 author: "Lucas Sá Barreto Jordão"
 date: "2026-09-22"
 bibliography: references.bib
@@ -8,15 +8,36 @@ bibliography: references.bib
 
 # Why this pattern matters
 
-`reusable-footnotes` is motivated by a citation pattern that is especially common in **Law**. Legal scholarship, briefs, opinions, memoranda, and books often place bibliographic references in page footnotes rather than relying only on a final reference list.
+`reusable-footnotes` is designed for a citation pattern that is especially common in **Law**. Legal scholarship, briefs, opinions, memoranda, and books frequently place bibliographic references in page footnotes rather than relying only on a final reference list. The same practice is also familiar in **History, Philosophy, Theology, Classics, literary studies, and other Humanities disciplines**.
 
-The same pattern is also familiar in **History, Philosophy, Theology, Classics, literary studies, and other Humanities disciplines**, where full references in footnotes keep documentary support close to the argument.
+The important distinction is between the **bibliographic source** and its **footnote occurrences**. BibTeX should define the source once; Quarto should decide how that source is rendered wherever it is used.
 
-In page-based outputs such as **PDF** and **DOCX**, this pattern has an especially practical advantage: a native footnote is laid out on the same page as the marker that calls it. The reader can therefore inspect the authority supporting a proposition without leaving the page or jumping to a bibliography at the end of the document. This proximity between argument and source is one of the reasons footnote-based citation remains so useful in legal and humanities writing.
+For printable outputs, this has an important practical consequence. In **PDF** and **DOCX**, the reader can encounter the full source at the bottom of the same page as the proposition it supports. A reference that is cited again on another page can therefore appear again on that later page, while repeated uses on the *same* page can share one footnote.
 
-The important distinction is between the **bibliographic source** and the **footnote occurrence**. BibTeX should define the source once; Quarto should decide how that source is rendered where it is cited.
+The intended page-local behavior is:
 
-# Two native Quarto citation forms
+```text
+page 1     A¹ ... A¹ ... B²
+           ─────────────────
+           ¹ Full reference A
+           ² Full reference B
+
+page 2     A³ ... A³ ... B⁴       # continuous numbering
+           ─────────────────
+           ³ Full reference A
+           ⁴ Full reference B
+```
+
+or, when page-local numbering is selected:
+
+```text
+page 1     A¹ ... A¹ ... B²
+page 2     A¹ ... A¹ ... B²
+```
+
+In both cases, the source is repeated **between pages**, but not unnecessarily duplicated **within the same page**.
+
+# BibTeX and full bibliography entries
 
 A normal Pandoc/Quarto citation remains completely unchanged:
 
@@ -26,7 +47,7 @@ A normal citation stays normal: [@silva2026].
 
 For example: a normal citation stays normal [@silva2026].
 
-The vendored `bibentry` extension adds a second, explicit representation:
+The development version of Fred Guth's `bibentry` extension adds a second representation:
 
 ```qmd
 [@silva2026]{.bibentry}
@@ -38,18 +59,18 @@ Here is the full entry inline:
 
 [@silva2026]{.bibentry}
 
-If the document defines, for example,
+With:
 
 ```yaml
 bibliography: references.bib
 csl: your-style.csl
 ```
 
-then both the ordinary citation and the `.bibentry` representation use the same bibliography database and the same CSL configuration. The ordinary citation uses the CSL citation layout; `.bibentry` extracts the corresponding bibliography-layout entry.
+ordinary citations use the CSL citation layout, while `.bibentry` extracts the corresponding bibliography-layout entry.
 
 # Legal-style footnotes
 
-The useful composition is entirely native Pandoc syntax:
+The useful composition remains native Pandoc syntax:
 
 ```qmd
 A legal proposition.^[See [@silva2026]{.bibentry}]
@@ -59,58 +80,89 @@ Rendered here:
 
 A constitutional proposition may be supported in a page footnote.^[See [@silva2026]{.bibentry}]
 
-This is the core legal use case: the prose contains only a superscript marker, while the footnote contains the full bibliographic entry.
-
-For **PDF** and **DOCX**, this means the full authority can appear at the bottom of the very page on which the proposition is made. A page can therefore carry the bibliographic support needed for the authorities cited on that page, keeping the documentary evidence physically close to the legal argument.
-
 The Constitution itself can be rendered in full the same way.^[See [@brasil1988]{.bibentry}]
 
 The mechanism is not limited to Law. A historical argument can use the same pattern.^[See [@bloch1953]{.bibentry}]
 
-# Reusing the same bibliographic footnote
+# Multi-page print demonstration
 
-`bibentry` and `reusable-footnotes` have separate responsibilities:
+The following example is intentionally spread over several physical pages using Quarto's native `pagebreak` shortcode. This makes the page-local behavior visible in **PDF** and **DOCX** rather than keeping all examples on one page.
 
-- **`bibentry`** resolves a citation key and prints its long CSL bibliography form;
-- **`reusable-footnotes`** controls recurrence of identical footnote content.
+## Demonstration page 1
 
-Because `bibentry` runs first, two identical bibliographic footnotes become identical footnote AST content before `reusable-footnotes` evaluates them.
+A printable legal document often develops an argument over several paragraphs while keeping authorities immediately available to the reader. The first occurrence below creates the full footnote for José Afonso da Silva.^[See [@silva2026]{.bibentry}]
 
-For example, this reference appears once here.^[See [@silva2026]{.bibentry}]
+A later sentence on the same page can rely on exactly the same bibliographic footnote without printing the long entry a second time.^[See [@silva2026]{.bibentry}]
 
-And the same reference appears again later with exactly the same footnote content.^[See [@silva2026]{.bibentry}]
+The Constitution is a distinct source and therefore receives its own footnote.^[See [@brasil1988]{.bibentry}]
 
-Within the current reusable-footnote scope, both occurrences can point to the same canonical note instead of duplicating the same long reference text.
+This page-local model is useful when the body text is intended to be read on paper or as a paginated digital document: the source remains close to the proposition, but repeated use of the same source does not make the bottom of the page unnecessarily repetitive.
 
-The page-local reading benefit described above comes from **native footnotes** themselves. Reuse is a separate policy: when an identical note is deliberately deduplicated, later markers may point back to a canonical note according to the configured output scope.
+A final sentence on this first page cites the Constitution again. Because the footnote content is identical and the occurrence is on the same page, it reuses the existing note.^[See [@brasil1988]{.bibentry}]
 
-If the footnote content changes, it is treated as a different note. This makes locators explicit and predictable:
+{{< pagebreak >}}
 
-```qmd
-A proposition.^[See [@silva2026]{.bibentry}, p. 185.]
+## Demonstration page 2
 
-Another proposition.^[See [@silva2026]{.bibentry}, p. 241.]
+This second page deliberately cites the same authorities again. The Silva reference must now be printed again at the bottom of this page, because a reader should not need to return to the previous page to identify the source.^[See [@silva2026]{.bibentry}]
+
+A second occurrence on this same page should reuse the new page-local Silva footnote.^[See [@silva2026]{.bibentry}]
+
+The Constitution likewise receives a new page-local occurrence here.^[See [@brasil1988]{.bibentry}]
+
+The point is not to treat the bibliographic source as a new source. BibTeX still contains only one `silva2026` entry and one `brasil1988` entry. What changes is the **placement of the footnote instance** in the printable document.
+
+This page ends by citing the Constitution once more, demonstrating reuse within the second page.^[See [@brasil1988]{.bibentry}]
+
+{{< pagebreak >}}
+
+## Demonstration page 3
+
+A third page repeats the same pattern to make the distinction explicit. José Afonso da Silva appears again as a footnote on this page.^[See [@silva2026]{.bibentry}]
+
+The same source can be invoked again without duplicating the footnote text on this page.^[See [@silva2026]{.bibentry}]
+
+A historical source can participate in exactly the same mechanism, showing that the extension is not specific to legal bibliography.^[See [@bloch1953]{.bibentry}]
+
+A second reference to the historical source on the same page reuses its page-local note.^[See [@bloch1953]{.bibentry}]
+
+The result is a document in which each printed page carries the references needed to understand that page, while identical notes are not redundantly printed twice on the same page.
+
+# Numbering policy
+
+Page-local reuse and footnote numbering are separate choices.
+
+For **continuous numbering** across printed pages:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: continuous
 ```
 
-The different locator text makes those footnotes distinct.
+The result is conceptually `1, 2` on the first page, then `3, 4` on the next page, while repeated occurrences on each page reuse the local number.
 
-# True inline replacement
+For **numbering restarted on every page**:
 
-The modified `bibentry` implementation replaces only the marked citation span, not the surrounding paragraph.
-
-```qmd
-For publication details, see [@silva2026]{.bibentry} and compare the discussion above.
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: page
 ```
 
-Rendered:
+The result is `1, 2` on page 1 and again `1, 2` on page 2.
 
-For publication details, see [@silva2026]{.bibentry} and compare the discussion above.
+For PDF/LaTeX, `reusable-footnotes` implements true physical-page awareness using LaTeX's page-tracking mechanism, so naturally flowing page breaks are handled after layout. For DOCX, physical pagination is determined later by Word or another word processor. Exact page-local reuse is therefore deterministic when the document uses explicit Quarto `{{< pagebreak >}}` boundaries; the supplied page-numbering reference document can also make Word restart footnote numbering on every physical page.
 
-This is important because the upstream prototype originally operated mainly at paragraph level. The extended implementation walks the AST recursively, so it also works inside nested structures such as native footnotes.
+# HTML, websites, and books
+
+A standalone HTML document is one scrolling document, so there is no physical-page concept comparable to PDF or DOCX. In that case, the rendered HTML file is treated as one logical page for reusable footnotes.
+
+A Quarto **website or HTML book is different**: each `.qmd` is rendered as its own HTML page. The filter state starts fresh for each rendered page, so every website/book page gets its own canonical footnotes naturally. A source cited on two different HTML pages can therefore appear in both pages' footnote areas, while repeated occurrences within one page share the local footnote.
 
 # Why BibTeX remains the source of truth
 
-The author should not copy and paste formatted references into `^[...]`. Instead, the `.bib` entry provides the stable identity:
+The author should not copy and paste formatted references into `^[...]`. The `.bib` entry provides the stable bibliographic identity:
 
 ```bibtex
 @book{silva2026,
@@ -124,7 +176,7 @@ The author should not copy and paste formatted references into `^[...]`. Instead
 }
 ```
 
-The document can then choose between two representations without duplicating data:
+The same entry can then be represented in three different ways without duplicating data:
 
 ```qmd
 Normal citation: [@silva2026]
@@ -134,38 +186,26 @@ Full entry: [@silva2026]{.bibentry}
 Full entry in a footnote: ^[See [@silva2026]{.bibentry}]
 ```
 
-The same mechanism also works for primary legal sources such as the Constitution:
-
-```qmd
-Full Constitution entry: [@brasil1988]{.bibentry}
-```
-
-# Current integration
+# `bibentry` integration
 
 This repository currently vendors an **extended development version** of Fred Guth's [`bibentry`](https://github.com/fredguth/bibentry) extension under `_extensions/bibentry/` for integration testing. The original project is MIT licensed and remains credited to Frederico Guth.
 
-The proposed upstream changes add:
+The proposed upstream changes add recursive AST support, including `.bibentry` inside native footnotes; true inline replacement; a single citeproc pass preserving numeric CSL ordering; and portable AST output for HTML, PDF/LaTeX, DOCX, and Typst.
 
-- recursive AST support, including `.bibentry` inside footnotes;
-- true inline replacement without replacing the whole paragraph;
-- one citeproc pass over the full document, preserving bibliography ordering and numeric styles;
-- bibliography preservation through `nocite` rather than hidden CSS/Typst content;
-- HTML, PDF/LaTeX, DOCX, and Typst-compatible AST output.
+`bibentry` and `reusable-footnotes` have separate responsibilities:
 
-The intention is to propose these changes back to `fredguth/bibentry` rather than permanently maintain a competing bibliography-rendering extension here.
+- **`bibentry`** resolves a citation key and renders its full CSL bibliography form;
+- **`reusable-footnotes`** decides when an identical footnote occurrence should be reused locally or printed again on a later page.
 
 # Output formats
 
-The integration is designed to remain writer-neutral, but its practical effect is particularly useful in page-based formats. **PDF** and **DOCX** can place a native bibliographic footnote on the same page as the text that cites it, so the reader does not need to leave the page to identify the source.
+| Format | Page-local behavior |
+|---|---|
+| HTML document | the whole HTML file is one logical page |
+| HTML website/book | each rendered `.qmd` page has its own footnote scope |
+| PDF | true physical-page reuse; identical notes print once per page and may reappear on later pages |
+| DOCX | exact reuse within explicit pagebreak-delimited pages; Word can restart numbering on every physical page through the supplied reference document |
 
-| Format | `bibentry` inside a native footnote | Reusable identical note |
-|---|---|---|
-| HTML | native footnote with full CSL entry | canonical note within the rendered page |
-| PDF | native LaTeX footnote with full CSL entry, laid out on the same page as its marker | repeated clickable marker to the canonical note |
-| DOCX | native Word footnote with full CSL entry, laid out on the same page as its marker | canonical note within the configured DOCX scope |
-
-This makes the combination especially attractive for legal and humanities documents: **BibTeX remains the single source of bibliographic truth, while PDF and DOCX can keep the full authority close to the exact page where it is cited.**
-
-No Python or output-specific post-processing is required.
+No Python runtime or post-render Python step is required.
 
 # References
