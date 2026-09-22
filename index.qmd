@@ -186,8 +186,8 @@ A Quarto **website** or **HTML book** is different: each `.qmd` page or chapter 
 
 Each rendered HTML page starts again at `1`; repeated calls within the page reuse the local canonical footnote.
 
-- [Website example — page-local numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website)
-- [Book example — page-local numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book)
+- [Website example — page-local numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/website/)
+- [Book example — page-local numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/book/)
 
 ```bash
 quarto preview examples/website
@@ -198,8 +198,8 @@ quarto preview examples/book
 
 The footnote **scope remains page-local**, but the displayed numbers continue across pages. In the examples below, the first page contributes `1, 2`, the second `3, 4`, and the third `5, 6`.
 
-- [Website example — global numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website-global)
-- [Book example — global numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book-global)
+- [Website example — global numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/website-global/)
+- [Book example — global numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/book-global/)
 
 ```bash
 quarto preview examples/website-global
