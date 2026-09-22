@@ -8,6 +8,7 @@ filters:
 reusable-footnotes:
   enabled: true
   backlinks: true
+  docx-scope: section
 
 format:
   html:
