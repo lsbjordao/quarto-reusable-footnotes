@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="quarto-1.8.26" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+<meta name="author" content="Lucas Sá Barreto Jordão" />
+<meta name="dcterms.date" content="2026-09-22" />
+
+<title>reusable-footnotes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+<!-- htmldependencies:E3FAD763 -->
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BVWXZQ0X6W"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BVWXZQ0X6W');
+</script>
+<style>
+.reusable-footnote-ref {
+  white-space: nowrap;
+}
+
+.reusable-footnote-backlinks {
+  white-space: nowrap;
+}
+
+.reusable-footnote-backlinks .reusable-footnote-back {
+  text-decoration: none;
+  margin-left: 0.12em;
+  opacity: 0.72;
+}
+
+.reusable-footnote-backlinks .reusable-footnote-back:hover,
+.reusable-footnote-backlinks .reusable-footnote-back:focus {
+  opacity: 1;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <div id="quarto-toc-target"></div>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">reusable-footnotes</h1>
+<p class="subtitle lead">Page-local reusable bibliographic footnotes for Quarto</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Lucas Sá Barreto Jordão </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 22, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+<nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#why-this-pattern-matters" id="toc-why-this-pattern-matters">Why this pattern matters</a></li>
+  <li><a href="#bibtex-and-full-bibliography-entries" id="toc-bibtex-and-full-bibliography-entries">BibTeX and full bibliography entries</a></li>
+  <li><a href="#legal-style-footnotes" id="toc-legal-style-footnotes">Legal-style footnotes</a></li>
+  <li><a href="#multi-page-print-demonstration" id="toc-multi-page-print-demonstration">Multi-page print demonstration</a>
+  <ul>
+  <li><a href="#demonstration-page-1" id="toc-demonstration-page-1">Demonstration page 1</a></li>
+  <li><a href="#demonstration-page-2" id="toc-demonstration-page-2">Demonstration page 2</a></li>
+  <li><a href="#demonstration-page-3" id="toc-demonstration-page-3">Demonstration page 3</a></li>
+  </ul></li>
+  <li><a href="#configuration" id="toc-configuration">Configuration</a></li>
+  <li><a href="#html-websites-and-books" id="toc-html-websites-and-books">HTML websites and books</a>
+  <ul>
+  <li><a href="#page-local-numbering" id="toc-page-local-numbering">Page-local numbering</a></li>
+  <li><a href="#global-numbering" id="toc-global-numbering">Global numbering</a></li>
+  </ul></li>
+  <li><a href="#why-bibtex-remains-the-source-of-truth" id="toc-why-bibtex-remains-the-source-of-truth">Why BibTeX remains the source of truth</a></li>
+  <li><a href="#bibentry-integration" id="toc-bibentry-integration"><code>bibentry</code> integration</a></li>
+  <li><a href="#output-formats" id="toc-output-formats">Output formats</a></li>
+  <li><a href="#references" id="toc-references">References</a></li>
+  </ul>
+</nav>
+<section id="why-this-pattern-matters" class="level1">
+<h1>Why this pattern matters</h1>
+<p><code>reusable-footnotes</code> is designed for a citation pattern that is especially common in <strong>Law</strong>. Legal scholarship, briefs, opinions, memoranda, and books frequently place bibliographic references in page footnotes rather than relying only on a final reference list. The same practice is also familiar in <strong>History, Philosophy, Theology, Classics, literary studies, and other Humanities disciplines</strong>.</p>
+<p>The important distinction is between the <strong>bibliographic source</strong> and its <strong>footnote occurrences</strong>. BibTeX should define the source once; Quarto should decide how that source is rendered wherever it is used.</p>
+<p>For printable outputs, this has an important practical consequence. In <strong>PDF</strong> and <strong>DOCX</strong>, the reader can encounter the full source at the bottom of the same page as the proposition it supports. A reference cited again on another page can therefore appear again on that later page, while repeated uses on the <em>same</em> page can share one footnote.</p>
+<p>The intended page-local behavior is:</p>
+<pre class="text"><code>page 1     A¹ ... A¹ ... B²
+           ─────────────────
+           ¹ Full reference A
+           ² Full reference B
+
+page 2     A³ ... A³ ... B⁴       # continuous numbering
+           ─────────────────
+           ³ Full reference A
+           ⁴ Full reference B</code></pre>
+<p>or, when numbering restarts on every page:</p>
+<pre class="text"><code>page 1     A¹ ... A¹ ... B²
+page 2     A¹ ... A¹ ... B²</code></pre>
+<p>In both cases, the source is repeated <strong>between pages</strong>, but not unnecessarily duplicated <strong>within the same page</strong>.</p>
+</section>
+<section id="bibtex-and-full-bibliography-entries" class="level1">
+<h1>BibTeX and full bibliography entries</h1>
+<p>A normal Pandoc/Quarto citation remains completely unchanged:</p>
+<pre class="qmd"><code>A normal citation stays normal: [@silva2026].</code></pre>
+<p>For example: a normal citation stays normal <span class="citation" data-cites="silva2026">(<a href="#ref-silva2026" role="doc-biblioref">Silva 2026</a>)</span>.</p>
+<p>The development version of Fred Guth’s <code>bibentry</code> extension adds a second representation:</p>
+<pre class="qmd"><code>[@silva2026]{.bibentry}</code></pre>
+<p>That form prints the <strong>full bibliography entry using the bibliography layout of the active CSL style</strong>. It does not redefine what <code>@silva2026</code> means.</p>
+<p>Here is the full entry inline:</p>
+<p>Silva, José Afonso da. 2026. <em>Curso de Direito Constitucional Positivo</em>. 47th ed. São Paulo: JusPodivm.</p>
+<p>With:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bibliography</span><span class="kw">:</span><span class="at"> references.bib</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">csl</span><span class="kw">:</span><span class="at"> your-style.csl</span></span></code></pre></div>
+<p>ordinary citations use the CSL citation layout, while <code>.bibentry</code> extracts the corresponding bibliography-layout entry.</p>
+</section>
+<section id="legal-style-footnotes" class="level1">
+<h1>Legal-style footnotes</h1>
+<p>The useful composition remains native Pandoc syntax:</p>
+<pre class="qmd"><code>A legal proposition.^[See [@silva2026]{.bibentry}]</code></pre>
+<p>Rendered here:</p>
+<p>A constitutional proposition may be supported in a page footnote.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>The Constitution itself can be rendered in full the same way.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>The mechanism is not limited to Law. A historical argument can use the same pattern.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+</section>
+<section id="multi-page-print-demonstration" class="level1">
+<h1>Multi-page print demonstration</h1>
+<p>The following example is intentionally spread over several physical pages using Quarto’s native <code>pagebreak</code> shortcode. This makes the page-local behavior visible in <strong>PDF</strong> and <strong>DOCX</strong> rather than keeping all examples on one page.</p>
+<section id="demonstration-page-1" class="level2">
+<h2>Demonstration page 1</h2>
+<p>A printable legal document often develops an argument over several paragraphs while keeping authorities immediately available to the reader. The first occurrence below creates the full footnote for José Afonso da Silva.<a href="#fn1" class="footnote-ref reusable-footnote-ref" id="fnref1-r2" role="doc-noteref"><sup>1</sup></a></p>
+<p>A later sentence on the same page can rely on exactly the same bibliographic footnote without printing the long entry a second time.<a href="#fn1" class="footnote-ref reusable-footnote-ref" id="fnref1-r3" role="doc-noteref"><sup>1</sup></a></p>
+<p>The Constitution is a distinct source and therefore receives its own footnote.<a href="#fn2" class="footnote-ref reusable-footnote-ref" id="fnref2-r2" role="doc-noteref"><sup>2</sup></a></p>
+<p>This page-local model is useful when the body text is intended to be read on paper or as a paginated digital document: the source remains close to the proposition, but repeated use of the same source does not make the bottom of the page unnecessarily repetitive.</p>
+<p>A final sentence on this first page cites the Constitution again. Because the footnote content is identical and the occurrence is on the same page, it reuses the existing note.<a href="#fn2" class="footnote-ref reusable-footnote-ref" id="fnref2-r3" role="doc-noteref"><sup>2</sup></a></p>
+<div style="page-break-after: always;"></div>
+</section>
+<section id="demonstration-page-2" class="level2">
+<h2>Demonstration page 2</h2>
+<p>This second page deliberately cites the same authorities again. The Silva reference must now be printed again at the bottom of this page, because a reader should not need to return to the previous page to identify the source.<a href="#fn1" class="footnote-ref reusable-footnote-ref" id="fnref1-r4" role="doc-noteref"><sup>1</sup></a></p>
+<p>A second occurrence on this same page should reuse the new page-local Silva footnote.<a href="#fn1" class="footnote-ref reusable-footnote-ref" id="fnref1-r5" role="doc-noteref"><sup>1</sup></a></p>
+<p>The Constitution likewise receives a new page-local occurrence here.<a href="#fn2" class="footnote-ref reusable-footnote-ref" id="fnref2-r4" role="doc-noteref"><sup>2</sup></a></p>
+<p>The point is not to treat the bibliographic source as a new source. BibTeX still contains only one <code>silva2026</code> entry and one <code>brasil1988</code> entry. What changes is the <strong>placement of the footnote instance</strong> in the printable document.</p>
+<p>This page ends by citing the Constitution once more, demonstrating reuse within the second page.<a href="#fn2" class="footnote-ref reusable-footnote-ref" id="fnref2-r5" role="doc-noteref"><sup>2</sup></a></p>
+<div style="page-break-after: always;"></div>
+</section>
+<section id="demonstration-page-3" class="level2">
+<h2>Demonstration page 3</h2>
+<p>A third page repeats the same pattern. José Afonso da Silva appears again as a footnote on this page.<a href="#fn1" class="footnote-ref reusable-footnote-ref" id="fnref1-r6" role="doc-noteref"><sup>1</sup></a></p>
+<p>The same source can be invoked again without duplicating the footnote text on this page.<a href="#fn1" class="footnote-ref reusable-footnote-ref" id="fnref1-r7" role="doc-noteref"><sup>1</sup></a></p>
+<p>A historical source can participate in exactly the same mechanism.<a href="#fn3" class="footnote-ref reusable-footnote-ref" id="fnref3-r2" role="doc-noteref"><sup>3</sup></a></p>
+<p>A second reference to the historical source on the same page reuses its page-local note.<a href="#fn3" class="footnote-ref reusable-footnote-ref" id="fnref3-r3" role="doc-noteref"><sup>3</sup></a></p>
+<p>The result is a document in which each printed page carries the references needed to understand that page, while identical notes are not redundantly printed twice on the same page.</p>
+</section>
+</section>
+<section id="configuration" class="level1">
+<h1>Configuration</h1>
+<p>The repository example uses page-local reuse and restarts footnote numbering on every page:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bibliography</span><span class="kw">:</span><span class="at"> references.bib</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">filters</span><span class="kw">:</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> bibentry</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> reusable-footnotes</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">reusable-footnotes</span><span class="kw">:</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">backlinks</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">scope</span><span class="kw">:</span><span class="at"> page</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">numbering</span><span class="kw">:</span><span class="at"> page</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">docx-scope</span><span class="kw">:</span><span class="at"> pagebreak</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="fu">format</span><span class="kw">:</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">html</span><span class="kw">:</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pdf</span><span class="kw">:</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">pdf-engine</span><span class="kw">:</span><span class="at"> lualatex</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">docx</span><span class="kw">:</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">toc</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">reference-doc</span><span class="kw">:</span><span class="at"> _extensions/reusable-footnotes/reference-page.docx</span></span></code></pre></div>
+<p>The main options are:</p>
+<ul>
+<li><code>scope: page</code>: identical notes are reused only within the current page scope and may appear again later.</li>
+<li><code>numbering: page</code>: numbering restarts at <code>1</code> on every printed page.</li>
+<li><code>numbering: continuous</code>: numbering continues across pages while reuse remains page-local.</li>
+<li><code>docx-scope: pagebreak</code>: explicit <code></code> boundaries define deterministic DOCX page scopes before Word performs final layout.</li>
+<li><code>backlinks: true</code>: HTML adds discreet return links for repeated calls to the same local footnote.</li>
+</ul>
+<p>For continuous numbering, change only:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reusable-footnotes</span><span class="kw">:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">scope</span><span class="kw">:</span><span class="at"> page</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">numbering</span><span class="kw">:</span><span class="at"> continuous</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">docx-scope</span><span class="kw">:</span><span class="at"> pagebreak</span></span></code></pre></div>
+<p>For DOCX page-local numbering, the supplied <code>reference-page.docx</code> configures Word’s native footnote counter to restart on each page. For continuous DOCX numbering, omit that reference document or use a custom continuous-numbering reference DOCX.</p>
+</section>
+<section id="html-websites-and-books" class="level1">
+<h1>HTML websites and books</h1>
+<p>A standalone HTML document is one scrolling document, so there is no physical-page concept comparable to PDF or DOCX. The whole file is therefore one logical reusable-footnote scope.</p>
+<p>A Quarto <strong>website</strong> or <strong>HTML book</strong> is different: each <code>.qmd</code> page or chapter is rendered as its own HTML page. The reusable-footnote scope starts fresh for every page, but numbering can either restart or continue globally.</p>
+<section id="page-local-numbering" class="level2">
+<h2>Page-local numbering</h2>
+<p>Each rendered HTML page starts again at <code>1</code>; repeated calls within the page reuse the local canonical footnote.</p>
+<ul>
+<li><a href="https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website">Website example — page-local numbering</a></li>
+<li><a href="https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book">Book example — page-local numbering</a></li>
+</ul>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview examples/website</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview examples/book</span></code></pre></div>
+</section>
+<section id="global-numbering" class="level2">
+<h2>Global numbering</h2>
+<p>The footnote <strong>scope remains page-local</strong>, but the displayed numbers continue across pages. In the examples below, the first page contributes <code>1, 2</code>, the second <code>3, 4</code>, and the third <code>5, 6</code>.</p>
+<ul>
+<li><a href="https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website-global">Website example — global numbering</a></li>
+<li><a href="https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book-global">Book example — global numbering</a></li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview examples/website-global</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> preview examples/book-global</span></code></pre></div>
+<p>Because Quarto renders each HTML page independently, continuous project-wide numbering needs an explicit page order:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reusable-footnotes</span><span class="kw">:</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">scope</span><span class="kw">:</span><span class="at"> page</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">numbering</span><span class="kw">:</span><span class="at"> continuous</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">html-order</span><span class="kw">:</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> index.qmd</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> doctrine.qmd</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> constitution.qmd</span></span></code></pre></div>
+<p><code>html-order</code> is used only to calculate the numbering offset contributed by earlier pages. It does <strong>not</strong> merge their footnote scopes. A source cited on two pages can therefore appear in both pages’ footnote areas while receiving different numbers in a continuous sequence.</p>
+<p>This gives four distinct, demonstrable HTML modes in the repository: website/local, website/global, book/local, and book/global.</p>
+</section>
+</section>
+<section id="why-bibtex-remains-the-source-of-truth" class="level1">
+<h1>Why BibTeX remains the source of truth</h1>
+<p>The author should not copy and paste formatted references into <code>^[...]</code>. The <code>.bib</code> entry provides the stable bibliographic identity:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="va">@book</span>{<span class="ot">silva2026</span>,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">author</span>    = {Silva, José Afonso da},</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">title</span>     = {Curso de direito constitucional positivo},</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">edition</span>   = {47},</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">address</span>   = {São Paulo},</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">publisher</span> = {JusPodivm},</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">year</span>      = {2026},</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">note</span>      = {Coedição Malheiros}</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>The same entry can then be represented in three different ways without duplicating data:</p>
+<pre class="qmd"><code>Normal citation: [@silva2026]
+
+Full entry: [@silva2026]{.bibentry}
+
+Full entry in a footnote: ^[See [@silva2026]{.bibentry}]</code></pre>
+</section>
+<section id="bibentry-integration" class="level1">
+<h1><code>bibentry</code> integration</h1>
+<p>This repository currently vendors an <strong>extended development version</strong> of Fred Guth’s <a href="https://github.com/fredguth/bibentry"><code>bibentry</code></a> extension under <code>_extensions/bibentry/</code> for integration testing. The original project is MIT licensed and remains credited to Frederico Guth.</p>
+<p>The proposed upstream changes add recursive AST support, including <code>.bibentry</code> inside native footnotes; true inline replacement; a single citeproc pass preserving numeric CSL ordering; and portable AST output for HTML, PDF/LaTeX, DOCX, and Typst.</p>
+<p><code>bibentry</code> and <code>reusable-footnotes</code> have separate responsibilities:</p>
+<ul>
+<li><strong><code>bibentry</code></strong> resolves a citation key and renders its full CSL bibliography form;</li>
+<li><strong><code>reusable-footnotes</code></strong> decides when an identical footnote occurrence should be reused locally or printed again on a later page.</li>
+</ul>
+</section>
+<section id="output-formats" class="level1">
+<h1>Output formats</h1>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Format</th>
+<th>Page-local behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>HTML document</td>
+<td>the whole HTML file is one logical page</td>
+</tr>
+<tr class="even">
+<td>HTML website/book</td>
+<td>each <code>.qmd</code> page owns its footnotes; numbering may restart or continue globally</td>
+</tr>
+<tr class="odd">
+<td>PDF</td>
+<td>true physical-page reuse; identical notes print once per page and may reappear on later pages</td>
+</tr>
+<tr class="even">
+<td>DOCX</td>
+<td>exact reuse within explicit pagebreak-delimited pages; Word can restart numbering on every physical page through the supplied reference document</td>
+</tr>
+</tbody>
+</table>
+<p>No Python runtime or post-render Python step is required.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-bloch1953" class="csl-entry" role="listitem">
+Bloch, Marc. 1953. <em>The Historian’s Craft</em>. Manchester: Manchester University Press.
+</div>
+<div id="ref-brasil1988" class="csl-entry" role="listitem">
+Brasil. 1988. <span>“Constituição Da República Federativa Do Brasil de 1988.”</span> Brasília, DF: Presidência da República. <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm">https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm</a>.
+</div>
+<div id="ref-silva2026" class="csl-entry" role="listitem">
+Silva, José Afonso da. 2026. <em>Curso de Direito Constitucional Positivo</em>. 47th ed. São Paulo: JusPodivm.
+</div>
+</div>
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>See Silva, José Afonso da. 2026. <em>Curso de Direito Constitucional Positivo</em>. 47th ed. São Paulo: JusPodivm. <span class="reusable-footnote-backlinks" aria-label="Additional returns"><a href="#fnref1-r2" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 2">↩︎</a> <a href="#fnref1-r3" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 3">↩︎</a> <a href="#fnref1-r4" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 4">↩︎</a> <a href="#fnref1-r5" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 5">↩︎</a> <a href="#fnref1-r6" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 6">↩︎</a> <a href="#fnref1-r7" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 7">↩︎</a> </span><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>See Brasil. 1988. <span>“Constituição Da República Federativa Do Brasil de 1988.”</span> Brasília, DF: Presidência da República. <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm">https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm</a>. <span class="reusable-footnote-backlinks" aria-label="Additional returns"><a href="#fnref2-r2" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 2">↩︎</a> <a href="#fnref2-r3" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 3">↩︎</a> <a href="#fnref2-r4" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 4">↩︎</a> <a href="#fnref2-r5" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 5">↩︎</a> </span><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>See Bloch, Marc. 1953. <em>The Historian’s Craft</em>. Manchester: Manchester University Press. <span class="reusable-footnote-backlinks" aria-label="Additional returns"><a href="#fnref3-r2" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 2">↩︎</a> <a href="#fnref3-r3" class="reusable-footnote-back" role="doc-backlink" aria-label="Back to occurrence 3">↩︎</a> </span><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main>
+<!-- /main column -->
+<script id = "quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+</body>
+
+</html>
