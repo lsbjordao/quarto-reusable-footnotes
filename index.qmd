@@ -16,6 +16,9 @@ No HTML, os retornos aparecem da forma mais discreta possível: uma pequena
 seta de retorno para cada ocorrência. Em um book ou website, cada arquivo/página HTML é renderizado separadamente;
 por isso a numeração e a reutilização recomeçam naturalmente em outra página.
 
+A implementação é inteiramente em **Lua/Quarto**, inclusive para DOCX. Não há
+pós-processamento em Python.
+
 # 1. Nota inline `^[...]`
 
 A primeira afirmação usa uma nota inline.^[Flora e Funga do Brasil. Jardim
@@ -109,13 +112,24 @@ A mesma frase pode ser definida como nota nomeada e reutilizada abaixo.[^mista]
 
 [^mista]: Esta nota demonstra a correspondência entre formas de autoria.
 
+# DOCX sem pós-processamento
+
+No DOCX, a primeira ocorrência permanece uma nota nativa do Word. Para uma nota
+que será reutilizada, a extensão coloca um bookmark invisível em torno dessa
+primeira marca. As ocorrências seguintes são campos `NOTEREF` do Word apontando
+para o bookmark original.
+
+Assim, o arquivo mantém **uma única nota real** em `footnotes.xml`, sem precisar
+descompactar, editar ou remontar o `.docx` depois da renderização. O campo
+`NOTEREF` também pode acompanhar uma eventual renumeração feita pelo Word.
+
 # Comportamento por formato
 
 | Formato | Recorrência | Rodapé |
 |---|---|---|
 | HTML | mesmo número e link para a nota original | uma nota; retorno discreto por ocorrência |
 | PDF | mesmo número sem criar uma segunda nota | uma nota real |
-| DOCX | mesmo número em sobrescrito, com hiperlink interno | uma nota real após o pós-processamento |
+| DOCX | campo nativo `NOTEREF` para a primeira referência | uma única nota real; sem pós-processamento |
 
 No HTML de um website/book, a unidade natural é a página renderizada. Assim,
 a mesma nota usada em outro `.qmd` recebe a numeração apropriada daquela nova
