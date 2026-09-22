@@ -55,7 +55,11 @@ Full CSL entry in a footnote: ^[See [@silva2026]{.bibentry}]
 
 ## Configuration
 
+A complete configuration for the **page-local numbering** mode used by the repository example is:
+
 ```yaml
+bibliography: references.bib
+
 filters:
   - bibentry
   - reusable-footnotes
@@ -64,17 +68,108 @@ reusable-footnotes:
   enabled: true
   backlinks: true
   scope: page
+  numbering: page
+  docx-scope: pagebreak
+
+format:
+  html:
+    toc: true
+  pdf:
+    toc: true
+    pdf-engine: lualatex
+  docx:
+    toc: false
+    reference-doc: _extensions/reusable-footnotes/reference-page.docx
+```
+
+### Options
+
+- `enabled`: enable or disable the filter.
+- `backlinks`: add discreet return links for repeated footnote calls in HTML.
+- `scope`: `page` (default) or `document` for legacy document-wide reuse in PDF/LaTeX.
+- `numbering`: `page` or `continuous`.
+- `docx-scope`: `pagebreak`, `section`, or `document`.
+
+### Page-local reuse with continuous numbering
+
+Use this when the same note should print once per page, but numbering should continue through the document:
+
+```yaml
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+  scope: page
   numbering: continuous
   docx-scope: pagebreak
 ```
 
-Options:
+Conceptually:
 
-- `enabled`: enable/disable the filter.
-- `backlinks`: add discreet return links in HTML.
-- `scope`: `page` (default) or legacy `document` reuse for PDF/LaTeX.
-- `numbering`: `continuous` or `page`.
-- `docx-scope`: `pagebreak`, `section`, or `document`.
+```text
+page 1: 1, 2
+page 2: 3, 4
+page 3: 5, 6
+```
+
+Repeated occurrences on each page reuse that page's local canonical number.
+
+For continuous DOCX numbering, omit `reference-page.docx` or use your own reference DOCX with continuous footnote numbering:
+
+```yaml
+format:
+  docx:
+    toc: false
+```
+
+### Page-local reuse with numbering restarted on every page
+
+Use:
+
+```yaml
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+  scope: page
+  numbering: page
+  docx-scope: pagebreak
+
+format:
+  docx:
+    reference-doc: _extensions/reusable-footnotes/reference-page.docx
+```
+
+Conceptually:
+
+```text
+page 1: 1, 2
+page 2: 1, 2
+page 3: 1, 2
+```
+
+The supplied `reference-page.docx` configures Word's native footnote counter with `w:numRestart="eachPage"`.
+
+### DOCX page boundaries
+
+For deterministic page-local reuse in DOCX, insert explicit Quarto page breaks:
+
+```qmd
+Page one text.^[Same note.]
+
+Again on page one.^[Same note.]
+
+{{< pagebreak >}}
+
+Page two text.^[Same note.]
+```
+
+with:
+
+```yaml
+reusable-footnotes:
+  docx-scope: pagebreak
+```
+
+Pandoc's Lua-filter phase runs before Word performs final pagination, so automatic Word page breaks cannot be known at filter time. Explicit `{{< pagebreak >}}` boundaries give the extension deterministic page scopes while Word still handles final page layout normally.
 
 ## PDF / LaTeX
 
