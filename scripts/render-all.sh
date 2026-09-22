@@ -12,7 +12,6 @@ fi
 echo "quarto não encontrado; usando fallback Pandoc para os três formatos." >&2
 FILTER="_extensions/reusable-footnotes/reusable-footnotes.lua"
 CSS="_extensions/reusable-footnotes/reusable-footnotes.css"
-FIXER="_extensions/reusable-footnotes/reusable-footnotes-docx.py"
 
 pandoc index.qmd \
   -f markdown \
@@ -40,7 +39,5 @@ pandoc index.qmd \
   --standalone \
   --lua-filter="$FILTER" \
   -o _output/index.docx
-
-python "$FIXER" _output/index.docx
 
 echo "Saídas geradas em $ROOT/_output" >&2
