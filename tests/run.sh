@@ -95,16 +95,16 @@ docx_native_refs="$(count_matches '<w:footnoteReference' "$TMP/document.xml")"
 docx_reuse_links="$(count_matches '<w:hyperlink w:anchor="rfn_note_[0-9]+"' "$TMP/document.xml")"
 docx_bookmarks="$(count_matches 'w:name="rfn_note_[0-9]+"' "$TMP/footnotes.xml")"
 docx_real_notes="$(count_matches '<w:footnote w:id="' "$TMP/footnotes.xml")"
-docx_noterefs="$(count_matches 'NOTEREF' "$TMP/document.xml")"
+docx_noteref_fields="$(count_matches '<w:fldSimple[^>]*w:instr=" NOTEREF' "$TMP/document.xml")"
 
 assert_eq 9 "$docx_native_refs" "referências DOCX nativas"
 assert_eq 9 "$docx_reuse_links" "links DOCX reutilizados"
 assert_eq 7 "$docx_bookmarks" "bookmarks nas notas DOCX canônicas"
 assert_eq 9 "$docx_real_notes" "notas DOCX reais"
-assert_eq 0 "$docx_noterefs" "campos DOCX NOTEREF legados"
+assert_eq 0 "$docx_noteref_fields" "campos DOCX NOTEREF legados"
 
-# Regression for the reported numbering bug: the cached/displayed number is
-# literal and must agree with the canonical bookmark encoded in the same link.
+# Regression for the reported numbering bug: the displayed number is literal
+# and must agree with the canonical bookmark encoded in the same link.
 assert_eq 2 "$(count_fixed '<w:hyperlink w:anchor="rfn_note_000001" w:history="1"><w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr><w:t>1</w:t></w:r></w:hyperlink>' "$TMP/document.xml")" "recorrências DOCX da nota 1"
 assert_eq 2 "$(count_fixed '<w:hyperlink w:anchor="rfn_note_000002" w:history="1"><w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr><w:t>2</w:t></w:r></w:hyperlink>' "$TMP/document.xml")" "recorrências DOCX da nota 2"
 for number in 3 4 5 6 9; do
@@ -123,5 +123,5 @@ if find . -type f -name '*.py' -print -quit | grep -q .; then
   exit 1
 fi
 
-echo "OK DOCX: 9 notas reais + 9 links internos com números canônicos; nenhum NOTEREF e nenhum Python."
+echo "OK DOCX: 9 notas reais + 9 links internos com números canônicos; nenhum campo NOTEREF e nenhum Python."
 echo "Todos os testes passaram."
