@@ -1,0 +1,13 @@
+---
+title: "Constitution"
+---
+
+# Independent footnotes on a third website page
+
+The Constitution appears as a new footnote on this page even though it was already cited on the website home page.^[See [@brasil1988]{.bibentry}]
+
+A second citation on this same page reuses the local constitutional footnote.^[See [@brasil1988]{.bibentry}]
+
+José Afonso da Silva can also reappear here as a new local footnote for this page.^[See [@silva2026]{.bibentry}]
+
+This demonstrates the intended HTML website behavior: **reuse within one rendered page, repetition across different rendered pages**.
