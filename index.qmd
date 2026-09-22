@@ -180,26 +180,47 @@ For DOCX page-local numbering, the supplied `reference-page.docx` configures Wor
 
 A standalone HTML document is one scrolling document, so there is no physical-page concept comparable to PDF or DOCX. The whole file is therefore one logical reusable-footnote scope.
 
-A Quarto **website** or **HTML book** is different: each `.qmd` page or chapter is rendered as its own HTML page. The filter state starts fresh for each rendered page. This naturally gives the behavior we want: a source may appear again in the footnotes of another page, while repeated calls within the same page share one local footnote.
+A Quarto **website** or **HTML book** is different: each `.qmd` page or chapter is rendered as its own HTML page. The reusable-footnote scope starts fresh for every page, but numbering can either restart or continue globally.
 
-Two complete examples are included in this repository:
+## Page-local numbering
 
-- [Quarto website example](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website) — three independent website pages that repeat José Afonso da Silva and the Constitution across pages.
-- [Quarto book example](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book) — three HTML book chapters, each with its own footnote scope.
+Each rendered HTML page starts again at `1`; repeated calls within the page reuse the local canonical footnote.
 
-Run them locally with:
+- [Website example — page-local numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website)
+- [Book example — page-local numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book)
 
 ```bash
 quarto preview examples/website
-```
-
-and:
-
-```bash
 quarto preview examples/book
 ```
 
-On each website page or book chapter, an identical reference is printed once in the local footnote area and reused by additional calls on that page. Navigating to the next page or chapter creates a new footnote scope, so the same bibliographic source can appear again there.
+## Global numbering
+
+The footnote **scope remains page-local**, but the displayed numbers continue across pages. In the examples below, the first page contributes `1, 2`, the second `3, 4`, and the third `5, 6`.
+
+- [Website example — global numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/website-global)
+- [Book example — global numbering](https://github.com/lsbjordao/quarto-reusable-footnotes/tree/main/examples/book-global)
+
+```bash
+quarto preview examples/website-global
+quarto preview examples/book-global
+```
+
+Because Quarto renders each HTML page independently, continuous project-wide numbering needs an explicit page order:
+
+```yaml
+reusable-footnotes:
+  scope: page
+  numbering: continuous
+  html-order:
+    - index.qmd
+    - doctrine.qmd
+    - constitution.qmd
+```
+
+`html-order` is used only to calculate the numbering offset contributed by earlier pages. It does **not** merge their footnote scopes. A source cited on two pages can therefore appear in both pages' footnote areas while receiving different numbers in a continuous sequence.
+
+This gives four distinct, demonstrable HTML modes in the repository: website/local, website/global, book/local, and book/global.
 
 # Why BibTeX remains the source of truth
 
@@ -243,8 +264,7 @@ The proposed upstream changes add recursive AST support, including `.bibentry` i
 | Format | Page-local behavior |
 |---|---|
 | HTML document | the whole HTML file is one logical page |
-| HTML website | each rendered `.qmd` page has its own footnote scope |
-| HTML book | each rendered chapter page has its own footnote scope |
+| HTML website/book | each `.qmd` page owns its footnotes; numbering may restart or continue globally |
 | PDF | true physical-page reuse; identical notes print once per page and may reappear on later pages |
 | DOCX | exact reuse within explicit pagebreak-delimited pages; Word can restart numbering on every physical page through the supplied reference document |
 
