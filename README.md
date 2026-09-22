@@ -272,8 +272,8 @@ reusable-footnotes:
 
 Live examples:
 
-- [Website — page-local numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/website/_site/index.html)
-- [Book — page-local numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/book/_book/index.html)
+- [Website — page-local numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/website/)
+- [Book — page-local numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/book/)
 
 ### HTML global numbering
 
@@ -293,8 +293,8 @@ The extension counts canonical footnotes in preceding source pages and applies t
 
 Live examples:
 
-- [Website — global numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/website-global/_site/index.html) → `1, 2` / `3, 4` / `5, 6`
-- [Book — global numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/book-global/_book/index.html) → `1, 2` / `3, 4` / `5, 6`
+- [Website — global numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/website-global/) → `1, 2` / `3, 4` / `5, 6`
+- [Book — global numbering](https://lsbjordao.github.io/quarto-reusable-footnotes/examples/book-global/) → `1, 2` / `3, 4` / `5, 6`
 
 Preview all four modes locally with:
 
