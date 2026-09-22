@@ -26,10 +26,18 @@ local function meta_bool(value, default)
   return default
 end
 
+local function meta_string(value, default)
+  if value == nil then return default end
+  local s = pandoc.utils.stringify(value):lower()
+  if s == "" then return default end
+  return s
+end
+
 local function config_from(meta)
   local cfg = {
     enabled = true,
     backlinks = true,
+    docx_scope = "section",
   }
 
   local raw = meta["reusable-footnotes"]
@@ -38,6 +46,10 @@ local function config_from(meta)
   if pandoc.utils.type(raw) == "MetaMap" then
     cfg.enabled = meta_bool(raw.enabled, true)
     cfg.backlinks = meta_bool(raw.backlinks, true)
+    cfg.docx_scope = meta_string(raw["docx-scope"], "section")
+    if cfg.docx_scope ~= "section" and cfg.docx_scope ~= "document" then
+      cfg.docx_scope = "section"
+    end
   else
     cfg.enabled = meta_bool(raw, true)
   end
@@ -134,9 +146,8 @@ local function add_docx_note_anchor(note, bookmark_id, bookmark_name)
 end
 
 local function docx_reuse_link(bookmark_name, number)
-  -- Use a plain internal hyperlink with a literal canonical number instead of
-  -- NOTEREF. This avoids stale/cached field results displaying another note's
-  -- number before Word refreshes its fields.
+  -- Use a plain internal hyperlink with the section-local canonical number.
+  -- This avoids stale/cached fields while matching Word's native numbering.
   local xml = string.format(
     '<w:hyperlink w:anchor="%s" w:history="1">' ..
       '<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr>' ..
@@ -153,9 +164,98 @@ local function include_html_assets()
   quarto.doc.include_file('in-header', 'reusable-footnotes.html')
 end
 
+local function is_docx_format()
+  return FORMAT:match('docx') or FORMAT:match('openxml')
+end
+
+local function docx_section_key(section_id, note)
+  return tostring(section_id) .. "\31" .. note_key(note)
+end
+
+-- Pandoc/Quarto DOCX restarts native footnote numbering at each top-level
+-- section in the default writer. Process top-level blocks in source order so
+-- reused markers carry the same section-local number as the canonical note.
+-- A document-wide mode remains available for custom reference DOCX files that
+-- use continuous numbering.
+local function process_docx(doc, cfg)
+  local counts = {}
+  local section_id = 0
+
+  for _, block in ipairs(doc.blocks) do
+    if cfg.docx_scope == "section" and block.t == "Header" and block.level == 1 then
+      section_id = section_id + 1
+    end
+
+    local current_section = (cfg.docx_scope == "section") and section_id or 0
+    pandoc.walk_block(block, {
+      Note = function(note)
+        local key = docx_section_key(current_section, note)
+        counts[key] = (counts[key] or 0) + 1
+        return note
+      end
+    })
+  end
+
+  local canonical_number = {}
+  local occurrence = {}
+  local bookmarks = {}
+  local next_number_by_section = {}
+  local next_bookmark_id = 2000000000
+  section_id = 0
+
+  for i, block in ipairs(doc.blocks) do
+    if cfg.docx_scope == "section" and block.t == "Header" and block.level == 1 then
+      section_id = section_id + 1
+    end
+
+    local current_section = (cfg.docx_scope == "section") and section_id or 0
+    doc.blocks[i] = pandoc.walk_block(block, {
+      Note = function(note)
+        local key = docx_section_key(current_section, note)
+        occurrence[key] = (occurrence[key] or 0) + 1
+
+        if canonical_number[key] == nil then
+          local next_number = (next_number_by_section[current_section] or 0) + 1
+          next_number_by_section[current_section] = next_number
+          canonical_number[key] = next_number
+
+          if (counts[key] or 0) > 1 then
+            next_bookmark_id = next_bookmark_id + 1
+            local bookmark = {
+              id = next_bookmark_id,
+              name = string.format(
+                'rfn_note_s%06d_n%06d',
+                current_section,
+                next_number
+              ),
+            }
+            bookmarks[key] = bookmark
+            note = add_docx_note_anchor(note, bookmark.id, bookmark.name)
+          end
+
+          return note
+        end
+
+        local bookmark = bookmarks[key]
+        if bookmark then
+          return docx_reuse_link(bookmark.name, canonical_number[key])
+        end
+
+        return note
+      end
+    })
+  end
+
+  return doc
+end
+
 function Pandoc(doc)
   local cfg = config_from(doc.meta)
   if not cfg.enabled then return doc end
+
+  if is_docx_format() then
+    return process_docx(doc, cfg)
+  end
 
   local counts = {}
   doc:walk({
@@ -168,9 +268,7 @@ function Pandoc(doc)
   local canonical_number = {}
   local occurrence = {}
   local latex_labels = {}
-  local docx_bookmarks = {}
   local next_number = 0
-  local next_bookmark_id = 2000000000
 
   local transformed = doc:walk({
     Note = function(note)
@@ -188,14 +286,6 @@ function Pandoc(doc)
           note = add_latex_note_label(note, label)
         elseif FORMAT:match('html') and cfg.backlinks then
           note = append_html_backlinks(note, next_number, counts[key])
-        elseif (FORMAT:match('docx') or FORMAT:match('openxml')) and counts[key] > 1 then
-          next_bookmark_id = next_bookmark_id + 1
-          local bookmark = {
-            id = next_bookmark_id,
-            name = string.format('rfn_note_%06d', next_number),
-          }
-          docx_bookmarks[key] = bookmark
-          note = add_docx_note_anchor(note, bookmark.id, bookmark.name)
         end
 
         return note
@@ -220,12 +310,6 @@ function Pandoc(doc)
           return latex_reuse_link(label)
         end
         return pandoc.RawInline('latex', string.format('\\footnotemark[%d]', number))
-      elseif FORMAT:match('docx') or FORMAT:match('openxml') then
-        local bookmark = docx_bookmarks[key]
-        if bookmark then
-          return docx_reuse_link(bookmark.name, number)
-        end
-        return note
       else
         -- Conservative fallback for formats without a dedicated renderer.
         return note
