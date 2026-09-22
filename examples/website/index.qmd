@@ -1,0 +1,15 @@
+---
+title: "Website example"
+---
+
+# Page-local footnotes in a Quarto website
+
+A Quarto website renders each `.qmd` file as its own HTML page. That makes the page boundary explicit: reusable footnotes are deduplicated within the current page, while the same bibliographic source may appear again in another page's footnotes.
+
+This page cites José Afonso da Silva once.^[See [@silva2026]{.bibentry}]
+
+The same source is cited again on this page, so the second call reuses the first local footnote.^[See [@silva2026]{.bibentry}]
+
+The Constitution is a different source and therefore receives its own footnote.^[See [@brasil1988]{.bibentry}]
+
+Continue to the [Doctrine](doctrine.qmd) page to see José Afonso da Silva appear again as a new page-local footnote.
