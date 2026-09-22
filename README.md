@@ -4,7 +4,7 @@ Extensão Quarto para **reutilizar notas de rodapé idênticas sem gerar novos n
 
 A proposta é deliberadamente simples: continue escrevendo notas com a sintaxe normal do Pandoc/Quarto (`^[...]` ou `[^id]`). Se o conteúdo AST de duas notas for exatamente igual, apenas a primeira cria uma nota real; as demais remetem ao mesmo número.
 
-A partir da versão **0.2.0**, a extensão é **100% Lua/Quarto**: não há pós-processamento em Python nem dependência externa para DOCX.
+A extensão é **100% Lua/Quarto**: não há pós-processamento em Python nem dependência externa para DOCX.
 
 ## Exemplo
 
@@ -47,18 +47,26 @@ A primeira ocorrência permanece como uma nota nativa. As ocorrências posterior
 
 ### PDF / LaTeX
 
-A primeira ocorrência gera a nota normalmente. As demais usam `\footnotemark[n]`, reutilizando o marcador já criado sem repetir o texto da nota.
+A primeira ocorrência gera a nota normalmente e recebe um `\label` interno quando será reutilizada. As chamadas seguintes são renderizadas como:
+
+```tex
+\hyperref[rfn-note-...]{\textsuperscript{\ref*{rfn-note-...}}}
+```
+
+Assim, o número reutilizado continua sendo o mesmo **e também permanece clicável**, apontando para a nota canônica. Não são usados marcadores `\footnotemark[n]` sem link para recorrências.
 
 ### DOCX
 
 A implementação usa somente Lua + OpenXML emitido pelo próprio Pandoc:
 
 1. a primeira ocorrência continua sendo uma nota nativa do Word;
-2. se aquela nota for reutilizada, o filtro envolve a primeira marca de referência com um bookmark invisível;
-3. as ocorrências seguintes viram campos Word `NOTEREF` apontando para esse bookmark;
-4. o campo usa `\f` para manter a formatação de referência de nota e `\h` para criar o hyperlink.
+2. se aquela nota for reutilizada, o filtro cria um bookmark invisível **dentro da própria nota** em `footnotes.xml`;
+3. as ocorrências seguintes viram hyperlinks internos em estilo `FootnoteReference`, exibindo explicitamente o número canônico;
+4. o hyperlink aponta diretamente para o bookmark da nota original.
 
-`NOTEREF` é o mecanismo nativo do Word para fazer múltiplas referências à mesma nota. Assim, o DOCX contém uma única nota real em `footnotes.xml`, enquanto as chamadas posteriores acompanham a mesma referência.
+A versão 0.2.1 não usa mais campos `NOTEREF`. Isso evita resultados de campo cacheados ou desatualizados que podiam fazer referências de notas diferentes exibirem o mesmo número antes de o Word recalcular os campos.
+
+O DOCX continua contendo uma única nota real para cada conteúdo reutilizado.
 
 ## Configuração
 
@@ -77,11 +85,11 @@ reusable-footnotes:
 - **HTML de documento único:** o escopo é o documento.
 - **PDF/DOCX:** o escopo é o documento monolítico renderizado.
 
-Isso produz exatamente o comportamento esperado para books/websites: a mesma nota reutiliza o número dentro da página atual, mas pode receber uma nova numeração quando reaparece em outra página `.qmd`.
+Isso produz o comportamento esperado para books/websites: a mesma nota reutiliza o número dentro da página atual, mas pode receber uma nova numeração quando reaparece em outra página `.qmd`.
 
 ## Regra de igualdade
 
-A versão 0.2.0 usa correspondência **exata do AST da nota**, com uma única normalização deliberada: `SoftBreak` é tratado como espaço. Assim, quebrar a mesma nota em linhas diferentes no arquivo-fonte não muda sua identidade.
+A versão 0.2.1 usa correspondência **exata do AST da nota**, com uma única normalização deliberada: `SoftBreak` é tratado como espaço. Assim, quebrar a mesma nota em linhas diferentes no arquivo-fonte não muda sua identidade.
 
 Formatação, links, citações e múltiplos parágrafos continuam fazendo parte da identidade. Isso evita heurísticas bibliográficas ou comparações aproximadas.
 
@@ -103,13 +111,20 @@ Sem Quarto, para desenvolvimento/testes, há um fallback baseado em Pandoc:
 
 ## Testes
 
-Os testes também não usam Python. Eles dependem apenas das ferramentas de linha de comando utilizadas pelo projeto (`bash`, `grep`, `unzip`, Pandoc/Quarto):
+Os testes não usam Python. Eles verificam, entre outras coisas:
+
+- 9 notas reais + 9 recorrências no HTML;
+- 9 recorrências PDF geradas como hyperlinks para 7 notas canônicas;
+- ausência de `\footnotemark[n]` sem link nas recorrências do PDF;
+- 9 notas reais + 9 hyperlinks internos no DOCX;
+- correspondência explícita entre bookmark e número mostrado em cada recorrência DOCX;
+- ausência de `NOTEREF` e de arquivos Python.
+
+Execute:
 
 ```bash
 ./tests/run.sh
 ```
-
-O teste DOCX verifica que o exemplo contém 9 notas reais e 9 recorrências `NOTEREF`, em vez de 18 notas independentes.
 
 ## Estrutura
 
