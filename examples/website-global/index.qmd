@@ -1,0 +1,15 @@
+---
+title: "Website — global numbering"
+---
+
+# Page-local reuse with global numbering
+
+This website keeps reusable-footnote identity local to each rendered HTML page, but the visible footnote numbers continue across the project.
+
+José Afonso da Silva is cited here for the first time.^[See [@silva2026]{.bibentry}]
+
+The same source is cited again on this page, so the second call reuses footnote **1** rather than creating another note.^[See [@silva2026]{.bibentry}]
+
+The Constitution is a different source and receives footnote **2**.^[See [@brasil1988]{.bibentry}]
+
+Continue to the [Doctrine](doctrine.qmd) page. Because this page contributed two canonical footnotes, the next page starts at **3**.
