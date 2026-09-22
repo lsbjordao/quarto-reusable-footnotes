@@ -6,10 +6,14 @@ cd "$ROOT"
 mkdir -p _output
 
 if command -v quarto >/dev/null 2>&1; then
-  exec quarto render
+  quarto render
+  quarto render examples/website
+  quarto render examples/book
+  echo "Main outputs and HTML examples rendered." >&2
+  exit 0
 fi
 
-echo "quarto não encontrado; usando fallback Pandoc para os três formatos." >&2
+echo "quarto não encontrado; usando fallback Pandoc apenas para os três formatos principais." >&2
 BIBENTRY="_extensions/bibentry/bibentry.lua"
 REUSABLE="_extensions/reusable-footnotes/reusable-footnotes.lua"
 CSS="_extensions/reusable-footnotes/reusable-footnotes.css"
@@ -47,4 +51,4 @@ pandoc index.qmd \
   --citeproc \
   -o _output/index.docx
 
-echo "Saídas geradas em $ROOT/_output" >&2
+echo "Saídas principais geradas em $ROOT/_output; exemplos website/book exigem Quarto CLI." >&2
