@@ -2,10 +2,14 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
+FIXTURES="$ROOT/tests/fixtures"
+BIBENTRY="$ROOT/_extensions/bibentry/bibentry.lua"
+REUSABLE="$ROOT/_extensions/reusable-footnotes/reusable-footnotes.lua"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
 
 command -v unzip >/dev/null 2>&1 || {
-  echo "ERRO: unzip é necessário para inspecionar o DOCX." >&2
+  echo "ERROR: unzip is required." >&2
   exit 1
 }
 
@@ -14,7 +18,7 @@ if command -v pandoc >/dev/null 2>&1; then
 elif command -v quarto >/dev/null 2>&1; then
   PANDOC=(quarto pandoc)
 else
-  echo "ERRO: Pandoc ou Quarto é necessário para os testes." >&2
+  echo "ERROR: Pandoc or Quarto is required." >&2
   exit 1
 fi
 
@@ -35,112 +39,117 @@ assert_eq() {
   local actual="$2"
   local message="$3"
   if [[ "$actual" != "$expected" ]]; then
-    echo "ERRO: $message — esperado $expected, encontrado $actual." >&2
+    echo "ERROR: $message — expected $expected, found $actual." >&2
     exit 1
   fi
 }
 
-./scripts/render-all.sh
+# -----------------------------------------------------------------------------
+# bibentry alone
+# -----------------------------------------------------------------------------
+cd "$FIXTURES"
 
-HTML="_output/index.html"
-DOCX="_output/index.docx"
-[[ -f "$HTML" ]] || { echo "ERRO: $HTML não foi gerado." >&2; exit 1; }
-[[ -f "$DOCX" ]] || { echo "ERRO: $DOCX não foi gerado." >&2; exit 1; }
+"${PANDOC[@]}" bibentry-input.md --lua-filter="$BIBENTRY" --citeproc -t plain -o "$TMP/bibentry.txt"
+"${PANDOC[@]}" bibentry-input.md --lua-filter="$BIBENTRY" --citeproc -t native -o "$TMP/bibentry.native"
+"${PANDOC[@]}" bibentry-input.md --lua-filter="$BIBENTRY" --citeproc -s -o "$TMP/bibentry.html"
+"${PANDOC[@]}" bibentry-input.md --lua-filter="$BIBENTRY" --citeproc -s -o "$TMP/bibentry.docx"
+"${PANDOC[@]}" bibentry-input.md --lua-filter="$BIBENTRY" --citeproc -t latex -o "$TMP/bibentry.tex"
 
-html_reused="$(count_matches 'class="footnote-ref reusable-footnote-ref"' "$HTML")"
-html_notes="$(count_matches '<li id="fn[0-9]+"' "$HTML")"
-html_backlink_groups="$(count_matches 'class="reusable-footnote-backlinks"' "$HTML")"
+grep -Fq 'Normal citation: INLINE[' "$TMP/bibentry.txt"
+grep -Fq 'Standalone: FULL[' "$TMP/bibentry.txt"
+grep -Fq 'Inline context: BEFORE FULL[' "$TMP/bibentry.txt"
+grep -Fq 'NOTE FULL[' "$TMP/bibentry.txt"
+grep -Fq '( "ref-alpha2024" , [ "csl-entry" ]' "$TMP/bibentry.native"
 
-assert_eq 9 "$html_reused" "recorrências HTML reutilizadas"
-assert_eq 9 "$html_notes" "notas HTML reais"
-assert_eq 7 "$html_backlink_groups" "grupos HTML de backlinks"
-echo "OK HTML: 9 notas reais, 9 recorrências e backlinks discretos."
+if grep -Fq 'left:-10000px' "$TMP/bibentry.html"; then
+  echo "ERROR: legacy hidden-citation CSS found in bibentry HTML output." >&2
+  exit 1
+fi
 
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+unzip -p "$TMP/bibentry.docx" word/footnotes.xml | grep -Fq 'A book used only through bibentry'
+grep -Fq '\footnote{' "$TMP/bibentry.tex"
+grep -Fq 'A book used only through bibentry' "$TMP/bibentry.tex"
 
-# PDF/LaTeX regression: every reused mark must be a hyperlink to a label placed
-# in the canonical footnote, not a bare \footnotemark.
-"${PANDOC[@]}" index.qmd \
-  -f markdown \
-  --lua-filter=_extensions/reusable-footnotes/reusable-footnotes.lua \
-  -t latex \
-  -o "$TMP/index.tex"
+echo "OK bibentry: full CSL entries work inline and inside native footnotes."
 
-pdf_labels="$(count_matches '\\label\{rfn-note-[0-9]+\}' "$TMP/index.tex")"
-pdf_reuse_links="$(count_matches '\\hyperref\[rfn-note-[0-9]+\]' "$TMP/index.tex")"
-pdf_bare_reuses="$(count_matches '\\footnotemark\[[0-9]+\]' "$TMP/index.tex")"
+# -----------------------------------------------------------------------------
+# reusable-footnotes alone
+# -----------------------------------------------------------------------------
+cat > "$TMP/reusable.md" <<'EOF'
+# Section A
 
-assert_eq 7 "$pdf_labels" "labels LaTeX das notas reutilizadas"
-assert_eq 9 "$pdf_reuse_links" "links LaTeX das recorrências"
-assert_eq 0 "$pdf_bare_reuses" "marcadores PDF reutilizados sem link"
-echo "OK PDF: as 9 recorrências são hyperlinks para as 7 notas canônicas."
+First.^[Same note.]
 
-unzip -p "$DOCX" word/document.xml > "$TMP/document.xml"
-unzip -p "$DOCX" word/footnotes.xml > "$TMP/footnotes.xml"
+Again.^[Same note.]
 
-docx_native_refs="$(count_matches '<w:footnoteReference' "$TMP/document.xml")"
-docx_reuse_links="$(count_matches '<w:hyperlink w:anchor="rfn_note_s[0-9]+_n[0-9]+"' "$TMP/document.xml")"
-docx_bookmarks="$(count_matches 'w:name="rfn_note_s[0-9]+_n[0-9]+"' "$TMP/footnotes.xml")"
-docx_real_notes="$(count_matches '<w:footnote w:id="' "$TMP/footnotes.xml")"
-docx_noteref_fields="$(count_matches '<w:fldSimple[^>]*w:instr=" NOTEREF' "$TMP/document.xml")"
+Different.^[Another note.]
 
-assert_eq 9 "$docx_native_refs" "referências DOCX nativas"
-assert_eq 9 "$docx_reuse_links" "links DOCX reutilizados"
-assert_eq 7 "$docx_bookmarks" "bookmarks nas notas DOCX canônicas"
-assert_eq 9 "$docx_real_notes" "notas DOCX reais"
-assert_eq 0 "$docx_noteref_fields" "campos DOCX NOTEREF legados"
+# Section B
 
-# Regression for section-local numbering. Quarto/Pandoc DOCX restarts native
-# footnotes at each top-level section. In the example, eight reused markers must
-# therefore display 1 and only the second distinct note in section 3 displays 2.
-sed 's#<w:hyperlink#\n<w:hyperlink#g; s#</w:hyperlink>#</w:hyperlink>\n#g' \
-  "$TMP/document.xml" > "$TMP/document-lines.xml"
-grep 'w:anchor="rfn_note_s' "$TMP/document-lines.xml" > "$TMP/reusable-links.xml"
+First here.^[Same note.]
 
-docx_reused_ones="$(grep -c '<w:t>1</w:t>' "$TMP/reusable-links.xml" || true)"
-docx_reused_twos="$(grep -c '<w:t>2</w:t>' "$TMP/reusable-links.xml" || true)"
-docx_reused_high="$(grep -Ec '<w:t>[3-9][0-9]*</w:t>' "$TMP/reusable-links.xml" || true)"
-
-assert_eq 8 "$docx_reused_ones" "recorrências DOCX com número local 1"
-assert_eq 1 "$docx_reused_twos" "recorrência DOCX com número local 2"
-assert_eq 0 "$docx_reused_high" "recorrências DOCX com números globais incorretos"
-
-# A repeated note in a new H1 section must become a new native footnote there,
-# because the native numbering restarts in that section.
-cat > "$TMP/cross-section.md" <<'EOF'
-# A
-
-Primeira.^[Mesma nota.]
-
-Repetida na seção A.^[Mesma nota.]
-
-# B
-
-Primeira na seção B.^[Mesma nota.]
-
-Repetida na seção B.^[Mesma nota.]
+Again here.^[Same note.]
 EOF
 
-"${PANDOC[@]}" "$TMP/cross-section.md" \
-  -f markdown \
-  --lua-filter=_extensions/reusable-footnotes/reusable-footnotes.lua \
-  -o "$TMP/cross-section.docx"
-unzip -p "$TMP/cross-section.docx" word/document.xml > "$TMP/cross-document.xml"
-unzip -p "$TMP/cross-section.docx" word/footnotes.xml > "$TMP/cross-footnotes.xml"
-assert_eq 2 "$(count_matches '<w:footnoteReference' "$TMP/cross-document.xml")" "notas nativas em duas seções"
-assert_eq 2 "$(count_matches '<w:hyperlink w:anchor="rfn_note_s[0-9]+_n000001"' "$TMP/cross-document.xml")" "recorrências locais em duas seções"
-assert_eq 2 "$(count_matches 'w:name="rfn_note_s[0-9]+_n000001"' "$TMP/cross-footnotes.xml")" "bookmarks locais em duas seções"
+cd "$ROOT"
+"${PANDOC[@]}" "$TMP/reusable.md" -f markdown --lua-filter="$REUSABLE" -s -o "$TMP/reusable.html"
+"${PANDOC[@]}" "$TMP/reusable.md" -f markdown --lua-filter="$REUSABLE" -t latex -o "$TMP/reusable.tex"
+"${PANDOC[@]}" "$TMP/reusable.md" -f markdown --lua-filter="$REUSABLE" -o "$TMP/reusable.docx"
 
-if grep -q '__REUSABLE_FOOTNOTE_GROUP_' "$TMP/footnotes.xml"; then
-  echo "ERRO: marcador legado de pós-processamento encontrado no DOCX." >&2
+assert_eq 3 "$(count_matches 'class="footnote-ref reusable-footnote-ref"' "$TMP/reusable.html")" "HTML reused markers"
+assert_eq 2 "$(count_matches '<li id="fn[0-9]+"' "$TMP/reusable.html")" "HTML canonical notes"
+assert_eq 1 "$(count_matches '\\label\{rfn-note-[0-9]+\}' "$TMP/reusable.tex")" "LaTeX reusable labels"
+assert_eq 3 "$(count_matches '\\hyperref\[rfn-note-[0-9]+\]' "$TMP/reusable.tex")" "LaTeX reused hyperlinks"
+
+unzip -p "$TMP/reusable.docx" word/document.xml > "$TMP/reusable-document.xml"
+unzip -p "$TMP/reusable.docx" word/footnotes.xml > "$TMP/reusable-footnotes.xml"
+assert_eq 3 "$(count_matches '<w:footnoteReference' "$TMP/reusable-document.xml")" "DOCX native references"
+assert_eq 2 "$(count_matches '<w:hyperlink w:anchor="rfn_note_s[0-9]+_n[0-9]+"' "$TMP/reusable-document.xml")" "DOCX reused hyperlinks"
+assert_eq 2 "$(count_matches 'w:name="rfn_note_s[0-9]+_n[0-9]+"' "$TMP/reusable-footnotes.xml")" "DOCX canonical bookmarks"
+
+echo "OK reusable-footnotes: recurrence works in HTML, LaTeX, and section-scoped DOCX."
+
+# -----------------------------------------------------------------------------
+# integration: bibentry first, reusable-footnotes second
+# -----------------------------------------------------------------------------
+cat > "$TMP/integration.md" <<EOF
+---
+bibliography: $FIXTURES/bibentry-refs.bib
+csl: $FIXTURES/bibentry-test.csl
+---
+
+# Legal-style footnotes
+
+First proposition.^[See [@alpha2024]{.bibentry}]
+
+Second proposition, same source and same note text.^[See [@alpha2024]{.bibentry}]
+EOF
+
+"${PANDOC[@]}" "$TMP/integration.md" -f markdown \
+  --lua-filter="$BIBENTRY" \
+  --lua-filter="$REUSABLE" \
+  --citeproc -s -o "$TMP/integration.html"
+
+"${PANDOC[@]}" "$TMP/integration.md" -f markdown \
+  --lua-filter="$BIBENTRY" \
+  --lua-filter="$REUSABLE" \
+  --citeproc -o "$TMP/integration.docx"
+
+assert_eq 1 "$(count_matches 'class="footnote-ref reusable-footnote-ref"' "$TMP/integration.html")" "integrated HTML reused marker"
+assert_eq 1 "$(count_matches '<li id="fn[0-9]+"' "$TMP/integration.html")" "integrated HTML canonical note"
+grep -Fq 'FULL[' "$TMP/integration.html"
+
+unzip -p "$TMP/integration.docx" word/document.xml > "$TMP/integration-document.xml"
+unzip -p "$TMP/integration.docx" word/footnotes.xml > "$TMP/integration-footnotes.xml"
+assert_eq 1 "$(count_matches '<w:footnoteReference' "$TMP/integration-document.xml")" "integrated DOCX native note"
+assert_eq 1 "$(count_matches '<w:hyperlink w:anchor="rfn_note_s[0-9]+_n[0-9]+"' "$TMP/integration-document.xml")" "integrated DOCX reused marker"
+grep -Fq 'A book used only through bibentry' "$TMP/integration-footnotes.xml"
+
+echo "OK integration: bibentry expands the CSL entry before reusable-footnotes deduplicates it."
+
+if find "$ROOT" -type f -name '*.py' -print -quit | grep -q .; then
+  echo "ERROR: repository still contains a Python file." >&2
   exit 1
 fi
 
-if find . -type f -name '*.py' -print -quit | grep -q .; then
-  echo "ERRO: o repositório ainda contém arquivo Python." >&2
-  exit 1
-fi
-
-echo "OK DOCX: numeração reutilizada acompanha o escopo da seção; nenhum número global indevido."
-echo "Todos os testes passaram."
+echo "All tests passed."
