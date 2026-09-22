@@ -1,0 +1,35 @@
+project:
+  type: book
+  output-dir: _book
+  render:
+    - index.qmd
+    - doctrine.qmd
+    - constitution.qmd
+
+book:
+  title: "reusable-footnotes — book global numbering"
+  chapters:
+    - index.qmd
+    - doctrine.qmd
+    - constitution.qmd
+
+bibliography: ../../references.bib
+suppress-bibliography: true
+
+filters:
+  - ../../_extensions/bibentry/bibentry.lua
+  - ../../_extensions/reusable-footnotes/reusable-footnotes.lua
+
+reusable-footnotes:
+  enabled: true
+  backlinks: true
+  scope: page
+  numbering: continuous
+  html-order:
+    - index.qmd
+    - doctrine.qmd
+    - constitution.qmd
+
+format:
+  html:
+    toc: true
