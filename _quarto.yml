@@ -1,8 +1,6 @@
 project:
   type: default
   output-dir: _output
-  post-render:
-    - python _extensions/reusable-footnotes/reusable-footnotes-docx.py
 
 filters:
   - reusable-footnotes
